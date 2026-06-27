@@ -1,0 +1,82 @@
+﻿# https://pre-commit.com
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=500]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: destroyed-symlinks
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-executables-have-shebangs
+
+  - repo: https://github.com/dnephin/pre-commit-golang
+    rev: v0.5.1
+    hooks:
+      - id: go-fmt
+      - id: go-mod-tidy
+        args: [-e, -v]
+      - id: go-build
+        stages: [push]
+      - id: go-test
+        stages: [push]
+
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.59.1
+    hooks:
+      - id: golangci-lint
+        args:
+          - --timeout=10m
+          - --config=.golangci.yml
+
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: []
+
+  - repo: local
+    hooks:
+      - id: rustfmt
+        name: rustfmt
+        description: Format Rust code
+        entry: cargo fmt --all -- --check
+        language: system
+        files: \.rs$
+        stages: [push]
+
+      - id: cargo-clippy
+        name: cargo clippy
+        description: Lint Rust code
+        entry: cargo clippy -- -D warnings
+        language: system
+        files: \.rs$
+        stages: [push]
+
+      - id: proto-format
+        name: protobuf format
+        description: Format protobuf files
+        entry: clang-format -i --style=google
+        language: system
+        files: \.proto$
+
+      - id: shellcheck
+        name: shellcheck
+        description: Check shell scripts
+        entry: shellcheck
+        language: system
+        files: \.sh$
+        stages: [push]
+

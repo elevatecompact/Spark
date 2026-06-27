@@ -1,0 +1,163 @@
+﻿# =============================================================================
+# Spark Monorepo .gitignore
+# =============================================================================
+
+# --- Dependencies ---
+vendor/
+node_modules/
+target/
+**/*.exe
+**/*.dll
+**/*.so
+**/*.dylib
+
+# --- Build Output ---
+dist/
+build/
+out/
+*.out
+*.test
+*.test.exe
+
+# --- Go ---
+go.work
+go.work.sum
+*.pb.go
+*.pb.gw.go
+*_string.go
+coverage.out
+coverage.html
+coverage.txt
+*.coverprofile
+*.prof
+*.trace
+
+# --- Rust ---
+target/
+**/*.rlib
+**/*.rmeta
+cargo-audit/audit.toml
+
+# --- Node / JavaScript ---
+node_modules/
+.next/
+.nuxt/
+.cache/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+*.js.map
+.eslintcache
+.stylelintcache
+.prettiercache
+.rts2_cache_cjs
+.rts2_cache_esm
+.rts2_cache_umd
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+*.egg-info/
+.eggs/
+dist/
+build/
+*.whl
+*.egg
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Terraform ---
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfvars.json
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+terraform.rc
+
+# --- IDE / Editor ---
+.idea/
+*.iml
+*.iws
+.vscode/
+*.swp
+*.swo
+*.swn
+*~
+*.orig
+*.bak
+.project
+.classpath
+.settings/
+*.sublime-workspace
+
+# --- OS ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# --- Environment ---
+.env
+.env.*
+!.env.example
+!.env.template
+*.pem
+*.key
+*.cert
+secrets/
+
+# --- Docker ---
+.docker/
+docker-compose.override.yml
+*.tar
+
+# --- Logs ---
+*.log
+logs/
+**/logs/
+
+# --- Proto ---
+tmp-proto/
+api/go/
+
+# --- Misc ---
+*.dump
+*.sqlite
+*.sqlite3
+*.db
+*.rdb
+*.zip
+*.tgz
+*.tar.gz
+*.rar
+*.7z
+.DS_Store?
+.pnp
+.pnp.js
+.yarn/
+yarn-error.log
+lerna-debug.log
+
+# --- Kubernetes ---
+kubeconfig*
+*.kubeconfig
+

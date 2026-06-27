@@ -1,0 +1,26 @@
+service_name: identity-service
+environment: development
+log_level: debug
+
+server:
+  port: 8080
+  grpc_port: 9090
+
+database:
+  url: postgres://spark:spark_dev@localhost:5432/spark?sslmode=disable
+  max_connections: 20
+  min_connections: 2
+
+redis:
+  url: redis://localhost:6379/0
+
+kafka:
+  brokers:
+    - localhost:9092
+  client_id: identity-service
+
+jwt:
+  secret: spark-dev-jwt-secret
+  expiry: 24h
+  issuer: spark-platform
+  audience: spark-api

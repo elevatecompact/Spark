@@ -1,0 +1,30 @@
+package domain
+
+import "errors"
+
+var (
+	ErrStreamNotFound                = errors.New("stream not found")
+	ErrStreamKeyInvalid              = errors.New("invalid stream key")
+	ErrStreamKeyAlreadyActive        = errors.New("stream key already active")
+	ErrStreamNotLive                 = errors.New("stream is not live")
+	ErrStreamAlreadyLive             = errors.New("stream is already live")
+	ErrStreamEnded                   = errors.New("stream has already ended")
+	ErrStreamInsufficientPermissions = errors.New("insufficient permissions")
+	ErrIngestFailed                  = errors.New("ingest connection failed")
+	ErrRTMPPublishFailed             = errors.New("RTMP publish failed")
+	ErrWebRTCConnectionFailed        = errors.New("WebRTC connection failed")
+	ErrHLSGenerationFailed           = errors.New("HLS generation failed")
+	ErrRecordingFailed               = errors.New("recording failed")
+	ErrRecordingNotFound             = errors.New("recording not found")
+	ErrSegmentNotFound               = errors.New("segment not found")
+	ErrPlaylistNotFound              = errors.New("playlist not found")
+	ErrViewerLimitReached            = errors.New("viewer limit reached")
+	ErrPeerConnectionNotFound        = errors.New("peer connection not found")
+	ErrInvalidSDP                    = errors.New("invalid SDP")
+	ErrDatabaseOperation             = errors.New("database operation failed")
+	ErrCacheOperation                = errors.New("cache operation failed")
+	ErrEventPublishFailed            = errors.New("event publish failed")
+	ErrValidation                    = errors.New("validation error")
+	ErrCategoryNotFound              = errors.New("category not found")
+	ErrStreamKeyGeneration           = errors.New("stream key generation failed")
+)
