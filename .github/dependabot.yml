@@ -1,7 +1,7 @@
 ﻿version: 2
 
 updates:
-  # Go modules for all services
+  # --- Implemented Go services ---
   - package-ecosystem: gomod
     directory: "/services/identity-service"
     schedule:
@@ -13,28 +13,9 @@ updates:
     labels:
       - dependencies
       - go
-    groups:
-      go-minor:
-        patterns:
-          - "*"
-        update-types:
-          - minor
-          - patch
 
   - package-ecosystem: gomod
     directory: "/services/creator-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/viewer-service"
     schedule:
       interval: weekly
       day: monday
@@ -57,261 +38,9 @@ updates:
       - dependencies
       - go
 
+  # --- Shared Go packages ---
   - package-ecosystem: gomod
-    directory: "/services/wallet-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/chat-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/notification-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/payment-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/analytics-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/subscription-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/gift-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/recommendation-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/search-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/media-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/moderation-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/community-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/event-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/competition-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/advertising-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/commerce-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/licensing-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/discovery-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/trust-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/messaging-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/services/translation-service"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  # SDKs
-  - package-ecosystem: gomod
-    directory: "/sdk/go"
+    directory: "/packages/auth"
     schedule:
       interval: weekly
       day: monday
@@ -320,11 +49,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-      - sdk
+      - go
 
-  # Rust
-  - package-ecosystem: cargo
-    directory: "/services/media-service"
+  - package-ecosystem: gomod
+    directory: "/packages/config"
     schedule:
       interval: weekly
       day: monday
@@ -333,47 +61,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-      - rust
+      - go
 
-  # npm / Node
-  - package-ecosystem: npm
-    directory: "/"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - npm
-
-  - package-ecosystem: npm
-    directory: "/apps/web"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - npm
-
-  - package-ecosystem: npm
-    directory: "/apps/creator-dashboard"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - npm
-
-  - package-ecosystem: npm
-    directory: "/apps/moderation-console"
+  - package-ecosystem: gomod
+    directory: "/packages/database"
     schedule:
       interval: weekly
       day: monday
@@ -382,10 +73,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-      - npm
+      - go
 
-  - package-ecosystem: npm
-    directory: "/apps/admin"
+  - package-ecosystem: gomod
+    directory: "/packages/events"
     schedule:
       interval: weekly
       day: monday
@@ -394,10 +85,10 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-      - npm
+      - go
 
-  - package-ecosystem: npm
-    directory: "/sdk/typescript"
+  - package-ecosystem: gomod
+    directory: "/packages/logger"
     schedule:
       interval: weekly
       day: monday
@@ -406,9 +97,57 @@ updates:
     open-pull-requests-limit: 5
     labels:
       - dependencies
-      - sdk
+      - go
 
-  # Docker
+  - package-ecosystem: gomod
+    directory: "/packages/telemetry"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - go
+
+  - package-ecosystem: gomod
+    directory: "/packages/types"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - go
+
+  - package-ecosystem: gomod
+    directory: "/packages/utils"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - go
+
+  - package-ecosystem: gomod
+    directory: "/packages/validators"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "09:00"
+      timezone: America/New_York
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - go
+
+  # --- Docker ---
   - package-ecosystem: docker
     directory: "/"
     schedule:
@@ -421,7 +160,7 @@ updates:
       - dependencies
       - docker
 
-  # GitHub Actions
+  # --- GitHub Actions ---
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
@@ -433,4 +172,3 @@ updates:
     labels:
       - dependencies
       - ci
-

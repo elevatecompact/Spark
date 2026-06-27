@@ -5,19 +5,17 @@ on:
     branches: [main]
     paths:
       - "services/**"
+      - "packages/**"
       - "infrastructure/**"
       - "deployment/**"
       - "Dockerfile"
-      - ".github/workflows/deploy.yml"
+      - ".github/workflows/**"
 
 env:
   REGISTRY: ghcr.io/spark-platform
   GO_VERSION: "1.22"
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # Determine which services changed
-  # ---------------------------------------------------------------------------
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
@@ -31,21 +29,9 @@ jobs:
           filters: |
             identity-service: services/identity-service/**
             creator-service: services/creator-service/**
-            viewer-service: services/viewer-service/**
             stream-service: services/stream-service/**
-            wallet-service: services/wallet-service/**
-            chat-service: services/chat-service/**
-            messaging-service: services/messaging-service/**
-            subscription-service: services/subscription-service/**
-            payment-service: services/payment-service/**
-            analytics-service: services/analytics-service/**
-            notification-service: services/notification-service/**
-            media-service: services/media-service/**
             infrastructure: infrastructure/** deployment/**
 
-  # ---------------------------------------------------------------------------
-  # Build and push Docker images for changed services
-  # ---------------------------------------------------------------------------
   build:
     name: Build & Push
     needs: changes
@@ -79,7 +65,6 @@ jobs:
           tags: |
             type=sha,prefix=,suffix=,format=short
             type=ref,event=branch
-            type=semver,pattern={{version}}
             type=raw,value=latest
 
       - name: Build and push
@@ -94,12 +79,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Generate image digest
-        run: echo "digest=$(docker inspect ${{ env.REGISTRY }}/${{ matrix.service }}:latest --format '{{.RepoDigests}}')" >> $GITHUB_ENV
-
-  # ---------------------------------------------------------------------------
-  # Deploy to Staging
-  # ---------------------------------------------------------------------------
   deploy-staging:
     name: Deploy to Staging
     needs: [changes, build]
@@ -107,174 +86,31 @@ jobs:
     if: ${{ needs.changes.outputs.services != '[]' && needs.changes.outputs.services != '' }}
     environment: staging
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: latest
-
-      - name: Set Kubernetes context
-        uses: azure/k8s-set-context@v4
-        with:
-          kubeconfig: ${{ secrets.KUBECONFIG_STAGING }}
-
-      - name: Deploy to staging
-        run: |
-          for svc in ${{ join(fromJSON(needs.changes.outputs.services), ' ') }}; do
-            echo "Deploying $svc to staging..."
-            kubectl set image deployment/$svc \
-              $svc=${{ env.REGISTRY }}/$svc:${{ github.sha }} \
-              --namespace=spark-staging \
-              --record
-            kubectl rollout status deployment/$svc \
-              --namespace=spark-staging \
-              --timeout=5m
+      - run: |
+          echo "Deploying ${{ join(fromJSON(needs.changes.outputs.services), ', ') }} to staging"
+          echo "SHA: ${{ github.sha }}"
+          echo "Staging deployment would run:"
+          for svc in $(echo '${{ needs.changes.outputs.services }}' | jq -r '.[]'); do
+            echo "  kubectl set image deployment/$svc $svc=${{ env.REGISTRY }}/$svc:${{ github.sha }}"
           done
 
-      - name: Run staging smoke tests
-        run: |
-          for svc in ${{ join(fromJSON(needs.changes.outputs.services), ' ') }}; do
-            echo "Smoke testing $svc..."
-            kubectl exec deployment/$svc \
-              --namespace=spark-staging \
-              -- sh -c "wget -qO- http://localhost:8080/health || true"
-          done
-
-  # ---------------------------------------------------------------------------
-  # Terraform Infrastructure (staging)
-  # ---------------------------------------------------------------------------
-  terraform-staging:
-    name: Terraform Staging
-    needs: changes
-    runs-on: ubuntu-latest
-    if: ${{ contains(needs.changes.outputs.services, 'infrastructure') }}
-    environment: staging
-    defaults:
-      run:
-        working-directory: infrastructure/terraform/staging
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9
-
-      - name: Terraform Init
-        env:
-          TF_BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG_STAGING }}
-        run: terraform init
-
-      - name: Terraform Plan
-        env:
-          TF_VAR_environment: staging
-        run: terraform plan -out=tfplan
-
-      - name: Terraform Apply
-        env:
-          TF_VAR_environment: staging
-        run: terraform apply -auto-approve tfplan
-
-  # ---------------------------------------------------------------------------
-  # Approval gate for production
-  # ---------------------------------------------------------------------------
   approve-production:
     name: Approve Production
-    needs: [deploy-staging, terraform-staging]
+    needs: deploy-staging
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' && (needs.deploy-staging.result == 'success' || needs.deploy-staging.result == 'skipped') }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     environment: production
     steps:
       - name: Await manual approval
         run: echo "Waiting for manual approval..."
 
-  # ---------------------------------------------------------------------------
-  # Deploy to Production
-  # ---------------------------------------------------------------------------
   deploy-production:
     name: Deploy to Production
     needs: approve-production
     runs-on: ubuntu-latest
-    if: ${{ github.ref == 'refs/heads/main' && needs.approve-production.result == 'success' }}
+    if: ${{ github.ref == 'refs/heads/main' }}
     environment: production
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure kubectl
-        uses: azure/setup-kubectl@v4
-        with:
-          version: latest
-
-      - name: Set Kubernetes context
-        uses: azure/k8s-set-context@v4
-        with:
-          kubeconfig: ${{ secrets.KUBECONFIG_PRODUCTION }}
-
-      - name: Deploy to production
-        run: |
-          for svc in ${{ join(fromJSON(needs.changes.outputs.services), ' ') }}; do
-            echo "Deploying $svc to production..."
-            kubectl set image deployment/$svc \
-              $svc=${{ env.REGISTRY }}/$svc:${{ github.sha }} \
-              --namespace=spark-production \
-              --record
-            kubectl rollout status deployment/$svc \
-              --namespace=spark-production \
-              --timeout=10m
-          done
-
-      - name: Health check
-        run: |
-          for svc in ${{ join(fromJSON(needs.changes.outputs.services), ' ') }}; do
-            kubectl exec deployment/$svc \
-              --namespace=spark-production \
-              -- sh -c "wget -qO- http://localhost:8080/health || exit 1"
-          done
-
-      - name: Notify deployment
-        uses: slackapi/slack-github-action@v1
-        with:
-          payload: |
-            {
-              "text": "Deployment to production complete: ${{ join(fromJSON(needs.changes.outputs.services), ', ') }} (${{ github.sha }})"
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        continue-on-error: true
-
-  # ---------------------------------------------------------------------------
-  # Terraform Infrastructure (production)
-  # ---------------------------------------------------------------------------
-  terraform-production:
-    name: Terraform Production
-    needs: approve-production
-    runs-on: ubuntu-latest
-    if: ${{ contains(needs.changes.outputs.services, 'infrastructure') && github.ref == 'refs/heads/main' }}
-    environment: production
-    defaults:
-      run:
-        working-directory: infrastructure/terraform/production
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: 1.9
-
-      - name: Terraform Init
-        env:
-          TF_BACKEND_CONFIG: ${{ secrets.TF_BACKEND_CONFIG_PRODUCTION }}
-        run: terraform init
-
-      - name: Terraform Plan
-        env:
-          TF_VAR_environment: production
-        run: terraform plan -out=tfplan
-
-      - name: Terraform Apply
-        env:
-          TF_VAR_environment: production
-        run: terraform apply -auto-approve tfplan
-
+      - run: |
+          echo "Production deployment would run for ${{ join(fromJSON(needs.changes.outputs.services), ', ') }}"
+          echo "SHA: ${{ github.sha }}"
