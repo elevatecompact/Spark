@@ -20,7 +20,6 @@ out/
 *.test.exe
 
 # --- Go ---
-go.work
 go.work.sum
 *.pb.go
 *.pb.gw.go
