@@ -1,0 +1,17 @@
+go 1.22
+
+use (
+	services/identity-service
+	services/creator-service
+	services/stream-service
+
+	packages/auth
+	packages/config
+	packages/database
+	packages/events
+	packages/logger
+	packages/telemetry
+	packages/types
+	packages/utils
+	packages/validators
+)
