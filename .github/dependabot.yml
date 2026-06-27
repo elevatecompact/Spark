@@ -1,174 +1,22 @@
 ﻿version: 2
-
 updates:
-  # --- Implemented Go services ---
   - package-ecosystem: gomod
     directory: "/services/identity-service"
     schedule:
       interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
   - package-ecosystem: gomod
     directory: "/services/creator-service"
     schedule:
       interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
   - package-ecosystem: gomod
     directory: "/services/stream-service"
     schedule:
       interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - go
-
-  # --- Shared Go packages ---
-  - package-ecosystem: gomod
-    directory: "/packages/auth"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/config"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/database"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/events"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/logger"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/telemetry"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/types"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/utils"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  - package-ecosystem: gomod
-    directory: "/packages/validators"
-    schedule:
-      interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - go
-
-  # --- Docker ---
   - package-ecosystem: docker
     directory: "/"
     schedule:
       interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 5
-    labels:
-      - dependencies
-      - docker
-
-  # --- GitHub Actions ---
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
       interval: weekly
-      day: monday
-      time: "09:00"
-      timezone: America/New_York
-    open-pull-requests-limit: 10
-    labels:
-      - dependencies
-      - ci

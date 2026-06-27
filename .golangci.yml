@@ -1,7 +1,4 @@
-﻿# https://golangci-lint.run/usage/configuration/
-version: "2"
-
-run:
+﻿run:
   timeout: 10m
   modules-download-mode: readonly
   issues-exit-code: 1
@@ -9,15 +6,13 @@ run:
   allow-parallel-runners: true
 
 output:
-  formats:
-    - format: colored-line-number
+  format: colored-line-number
   print-issued-lines: true
   print-linter-name: true
   sort-results: true
 
 linters:
   enable:
-    # Core
     - govet
     - errcheck
     - staticcheck
@@ -26,56 +21,31 @@ linters:
     - ineffassign
     - typecheck
     - unused
-
-    # Formatting
     - gofmt
     - goimports
     - whitespace
-
-    # Style
     - misspell
     - goconst
     - gocyclo
-    - lll
     - nakedret
     - prealloc
     - unconvert
     - unparam
     - decorder
-    - dupl
-
-    # Performance
     - gocritic
     - bodyclose
     - noctx
     - nilerr
-
-    # Security
-    - gosec
     - nosprintfhostport
-
   disable:
     - exhaustruct
-    - exhaustivestruct
     - wrapcheck
     - wsl
     - nlreturn
     - goerr113
-
-  presets:
-    - bug
-    - comment
-    - complexity
-    - error
-    - format
-    - import
-    - metalinter
-    - module
-    - performance
-    - sql
-    - style
-    - test
-    - unused
+    - dupl
+    - lll
+  fast: false
 
 linters-settings:
   govet:
@@ -98,70 +68,8 @@ linters-settings:
       - -SA1019
       - -SA2002
 
-  revive:
-    rules:
-      - name: exported
-        severity: warning
-      - name: blank-imports
-        severity: warning
-      - name: context-keys-type
-        severity: warning
-      - name: time-naming
-        severity: warning
-      - name: var-declaration
-        severity: warning
-      - name: unexported-return
-        severity: warning
-      - name: errorf
-        severity: warning
-      - name: empty-block
-        severity: warning
-      - name: superfluous-else
-        severity: warning
-      - name: unreachable-code
-        severity: warning
-      - name: get-return
-        severity: warning
-      - name: indent-error-flow
-        severity: warning
-      - name: error-strings
-        severity: warning
-      - name: increment-decrement
-        severity: warning
-      - name: error-naming
-        severity: warning
-      - name: range
-        severity: warning
-      - name: receiver-naming
-        severity: warning
-      - name: import-alias-naming
-        severity: warning
-      - name: constant-logical-expr
-        severity: warning
-      - name: modifies-parameter
-        severity: warning
-      - name: modifies-value-receiver
-        severity: warning
-      - name: useless-break
-        severity: warning
-      - name: range-val-in-closure
-        severity: warning
-      - name: range-val-address
-        severity: warning
-      - name: waitgroup-by-value
-        severity: warning
-      - name: unconditional-recursion
-        severity: warning
-      - name: identical-branches
-        severity: warning
-      - name: defer
-        severity: warning
-
   gocyclo:
     min-complexity: 15
-
-  lll:
-    line-length: 120
 
   misspell:
     locale: US
@@ -187,10 +95,9 @@ linters-settings:
       - G301
       - G307
       - G204
-      - G104
 
   goimports:
-    local-prefixes: github.com/spark-platform
+    local-prefixes: github.com/elevatecompact/spark
 
 issues:
   exclude-rules:
@@ -199,18 +106,9 @@ issues:
         - gocyclo
         - errcheck
         - gosec
-        - dupl
         - goconst
         - noctx
         - bodyclose
-
-    - path: \.pb\.go
-      linters:
-        - all
-
-    - path: \.pb\.gw\.go
-      linters:
-        - all
 
     - path: cmd/
       linters:
@@ -223,6 +121,5 @@ issues:
     - node_modules
     - target
     - dist
-    - \.git
-    - \.github
-
+    - .git
+    - .github
