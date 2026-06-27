@@ -1,0 +1,3 @@
+﻿# Architecture
+
+Oracle consists of four layers: feature ingestion, embedding store, inference runtime, and ranker. The ingestion layer consumes user interaction events (watch, like, share) from Kafka and updates per-user feature vectors in Redis. The embedding store (Milvus) holds item embeddings updated nightly via batch jobs. The inference runtime loads PyTorch models exported to ONNX and serves predictions via gRPC. The ranker applies business rules, diversity constraints, and exploration heuristics before returning the final top-N list. A/B testing infrastructure routes traffic across model variants.
