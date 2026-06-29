@@ -29,7 +29,6 @@ RUN apk add --no-cache \
 
 # Copy go.mod and go.sum first for layer caching
 COPY services/${SERVICE}/go.mod services/${SERVICE}/go.sum ./services/${SERVICE}/
-COPY api/go.mod api/go.sum ./api/
 
 # Download dependencies
 RUN cd services/${SERVICE} && go mod download && go mod verify
