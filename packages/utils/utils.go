@@ -4,8 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/big"
-	mathrand "math/rand"
+	mathrand "math/rand/v2"
 
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
@@ -43,8 +42,8 @@ func RandomString(length int) string {
 		charset := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 		result := make([]byte, length)
 		for i := range result {
-			n, _ := mathrand.Int(mathrand.Reader, big.NewInt(int64(len(charset))))
-			result[i] = charset[n.Int64()]
+			n := mathrand.IntN(len(charset))
+			result[i] = charset[n]
 		}
 		return string(result)
 	}

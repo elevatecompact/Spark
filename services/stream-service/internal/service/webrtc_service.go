@@ -164,7 +164,7 @@ func (s *WebRTCService) HandleOffer(ctx context.Context, streamID uuid.UUID, off
 
 	return &domain.WebRTCAnswer{
 		SDP:  answer.SDP,
-		Type: string(answer.Type),
+		Type: answer.Type.String(),
 	}, entry, nil
 }
 

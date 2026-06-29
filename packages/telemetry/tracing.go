@@ -7,6 +7,7 @@ import (
 
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/sdk/resource"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
@@ -64,13 +65,13 @@ func NewSpan(ctx context.Context, name string, opts ...trace.SpanStartOption) (c
 	return tracer.Start(ctx, name, opts...)
 }
 
-func RecordError(span trace.Span, err error) {
+func RecordSpanError(span trace.Span, err error) {
 	if span == nil || err == nil {
 		return
 	}
 	span.RecordError(err)
 	span.SetAttributes(attribute.Bool("error", true))
-	span.SetStatus(sdktrace.StatusError, err.Error())
+	span.SetStatus(codes.Error, err.Error())
 }
 
 func getEnvOrDefault(key, defaultVal string) string {
