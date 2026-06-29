@@ -6,7 +6,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
 
 	"github.com/elevatecompact/spark/services/stream-service/internal/domain"

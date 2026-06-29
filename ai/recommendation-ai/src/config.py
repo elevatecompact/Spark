@@ -1,0 +1,5 @@
+import os
+
+RECOMMENDATION_PORT: int = int(os.getenv("RECOMMENDATION_PORT", "8109"))
+RECOMMENDATION_KAFKA_BROKERS: str = os.getenv("RECOMMENDATION_KAFKA_BROKERS", "")
+LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")

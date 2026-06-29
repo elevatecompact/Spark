@@ -22,14 +22,14 @@ const (
 )
 
 type CloudEvent struct {
-	ID              string      json:"id"
-	Source          string      json:"source"
-	SpecVersion     string      json:"specversion"
-	Type            string      json:"type"
-	Subject         string      json:"subject"
-	Time            string      json:"time"
-	DataContentType string      json:"datacontenttype"
-	Data            interface{} json:"data"
+	ID              string      `json:"id"`
+	Source          string      `json:"source"`
+	SpecVersion     string      `json:"specversion"`
+	Type            string      `json:"type"`
+	Subject         string      `json:"subject"`
+	Time            string      `json:"time"`
+	DataContentType string      `json:"datacontenttype"`
+	Data            interface{} `json:"data"`
 }
 
 type Producer struct {

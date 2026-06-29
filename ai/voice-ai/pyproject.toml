@@ -1,0 +1,19 @@
+[project]
+name = "voice-ai"
+version = "0.1.0"
+description = "Voice processing AI service (STT & TTS)"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "pydantic",
+    "pydantic-settings",
+    "httpx",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

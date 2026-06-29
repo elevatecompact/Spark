@@ -69,8 +69,6 @@ func main() {
 	rtmpSvc := service.NewRTMPService(streamRepo, streamSvc)
 	webrtcSvc := service.NewWebRTCService(cfg, streamSvc)
 	hlsSvc := service.NewHLSService(cfg, streamSvc)
-	healthSvc := service.NewHealthService()
-	recordingSvc := service.NewRecordingService(cfg, producer, streamRepo)
 
 	mw := handler.NewMiddleware(cfg)
 

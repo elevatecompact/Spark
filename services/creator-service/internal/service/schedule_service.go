@@ -1,4 +1,4 @@
-﻿package service
+package service
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func NewScheduleService(pool *pgxpool.Pool, creatorRepo repository.CreatorReposi
 }
 
 func (s *ScheduleService) GetSchedule(ctx context.Context, creatorID uuid.UUID) ([]domain.ScheduleSlot, error) {
-	rows, err := s.pool.Query(ctx, SELECT * FROM schedule_slots WHERE creator_id =  AND active = true ORDER BY day_of_week, start_time, creatorID)
+	rows, err := s.pool.Query(ctx, `SELECT * FROM schedule_slots WHERE creator_id = $1 AND active = true ORDER BY day_of_week, start_time`, creatorID)
 	if err != nil {
 		return nil, fmt.Errorf("get schedule: %w", err)
 	}
@@ -71,8 +71,8 @@ func (s *ScheduleService) AddSlot(ctx context.Context, creatorID uuid.UUID, req 
 		CreatedAt: time.Now(),
 	}
 
-	_, err = s.pool.Exec(ctx, INSERT INTO schedule_slots (id, creator_id, day_of_week, start_time, end_time, title, recurring, active, created_at)
-		VALUES (, , , , , , , , ),
+	_, err = s.pool.Exec(ctx, `INSERT INTO schedule_slots (id, creator_id, day_of_week, start_time, end_time, title, recurring, active, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
 		slot.ID, slot.CreatorID, slot.DayOfWeek, slot.StartTime, slot.EndTime, slot.Title, slot.Recurring, slot.Active, slot.CreatedAt)
 	if err != nil {
 		return nil, fmt.Errorf("insert schedule slot: %w", err)
@@ -91,8 +91,8 @@ func (s *ScheduleService) UpdateSlot(ctx context.Context, id, creatorID uuid.UUI
 		return domain.ErrScheduleConflict
 	}
 
-	_, err = s.pool.Exec(ctx, UPDATE schedule_slots SET day_of_week=, start_time=, end_time=, title=, recurring= WHERE id= AND creator_id=,
-		id, creatorID, req.DayOfWeek, req.StartTime, req.EndTime, req.Title, req.Recurring)
+	_, err = s.pool.Exec(ctx, `UPDATE schedule_slots SET day_of_week=$1, start_time=$2, end_time=$3, title=$4, recurring=$5 WHERE id=$6 AND creator_id=$7`,
+		req.DayOfWeek, req.StartTime, req.EndTime, req.Title, req.Recurring, id, creatorID)
 	if err != nil {
 		return fmt.Errorf("update schedule slot: %w", err)
 	}
@@ -100,7 +100,7 @@ func (s *ScheduleService) UpdateSlot(ctx context.Context, id, creatorID uuid.UUI
 }
 
 func (s *ScheduleService) DeleteSlot(ctx context.Context, id, creatorID uuid.UUID) error {
-	_, err := s.pool.Exec(ctx, DELETE FROM schedule_slots WHERE id =  AND creator_id = , id, creatorID)
+	_, err := s.pool.Exec(ctx, `DELETE FROM schedule_slots WHERE id = $1 AND creator_id = $2`, id, creatorID)
 	if err != nil {
 		return fmt.Errorf("delete schedule slot: %w", err)
 	}
@@ -112,10 +112,10 @@ func (s *ScheduleService) GetLiveNow(ctx context.Context) ([]domain.Creator, err
 	currentDay := int(now.Weekday())
 	currentTime := now.Format("15:04")
 
-	rows, err := s.pool.Query(ctx, SELECT c.* FROM creators c 
+	rows, err := s.pool.Query(ctx, `SELECT c.* FROM creators c 
 		INNER JOIN schedule_slots s ON s.creator_id = c.id 
-		WHERE s.active = true AND s.day_of_week =  AND s.start_time <=  AND s.end_time >= 
-		GROUP BY c.id, currentDay, currentTime)
+		WHERE s.active = true AND s.day_of_week = $1 AND s.start_time <= $2 AND s.end_time >= $3
+		GROUP BY c.id`, currentDay, currentTime, currentTime)
 	if err != nil {
 		return nil, fmt.Errorf("get live now: %w", err)
 	}
@@ -128,14 +128,14 @@ func (s *ScheduleService) checkConflict(ctx context.Context, creatorID uuid.UUID
 	var exists bool
 	var err error
 	if excludeID != uuid.Nil {
-		err = s.pool.QueryRow(ctx, SELECT EXISTS(SELECT 1 FROM schedule_slots 
-			WHERE creator_id =  AND day_of_week =  AND active = true AND id != 
-			AND ((start_time <=  AND end_time > ) OR (start_time <  AND end_time >= ) OR (start_time >=  AND end_time <= ))),
+		err = s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schedule_slots 
+			WHERE creator_id = $1 AND day_of_week = $2 AND active = true AND id != $3
+			AND ((start_time <= $4 AND end_time > $4) OR (start_time < $5 AND end_time >= $5) OR (start_time >= $4 AND end_time <= $5)))`,
 			creatorID, dayOfWeek, excludeID, startTime, endTime).Scan(&exists)
 	} else {
-		err = s.pool.QueryRow(ctx, SELECT EXISTS(SELECT 1 FROM schedule_slots 
-			WHERE creator_id =  AND day_of_week =  AND active = true
-			AND ((start_time <=  AND end_time > ) OR (start_time <  AND end_time >= ) OR (start_time >=  AND end_time <= ))),
+		err = s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM schedule_slots 
+			WHERE creator_id = $1 AND day_of_week = $2 AND active = true
+			AND ((start_time <= $3 AND end_time > $3) OR (start_time < $4 AND end_time >= $4) OR (start_time >= $3 AND end_time <= $4)))`,
 			creatorID, dayOfWeek, startTime, endTime).Scan(&exists)
 	}
 	if err != nil {

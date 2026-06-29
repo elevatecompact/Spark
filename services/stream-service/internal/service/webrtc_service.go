@@ -90,8 +90,7 @@ func (s *WebRTCService) CreatePeerConnection(ctx context.Context, streamID uuid.
 	}
 
 	webrtcCfg := pion.Configuration{
-		ICEServers:   iceServers,
-		ICETrickle:   &s.cfg.WebRTC.ICETrickle,
+		ICEServers: iceServers,
 	}
 
 	api := pion.NewAPI(pion.WithMediaEngine(m), pion.WithInterceptorRegistry(i), pion.WithSettingEngine(se))
@@ -187,10 +186,11 @@ func (s *WebRTCService) HandleICECandidate(ctx context.Context, streamID uuid.UU
 		return err
 	}
 
+	sdpMLineIndex := uint16(candidate.SDPMLineIndex)
 	return entry.PeerConn.AddICECandidate(pion.ICECandidateInit{
 		Candidate:     candidate.Candidate,
 		SDPMid:        &candidate.SDPMid,
-		SDPMLineIndex: &candidate.SDPMLineIndex,
+		SDPMLineIndex: &sdpMLineIndex,
 	})
 }
 

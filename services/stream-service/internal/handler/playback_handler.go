@@ -125,8 +125,7 @@ func (h *PlaybackHandler) GetSegment(w http.ResponseWriter, r *http.Request) {
 
 func (h *PlaybackHandler) GetThumbnail(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
-	streamID, err := uuid.Parse(idStr)
-	if err != nil {
+	if _, err := uuid.Parse(idStr); err != nil {
 		respondError(w, http.StatusBadRequest, "invalid stream id")
 		return
 	}

@@ -35,13 +35,13 @@ func NewVerificationService(creatorRepo repository.CreatorRepository, producer *
 }
 
 type VerificationRequest struct {
-	CreatorID uuid.UUID json:"creator_id"
-	Status    VerificationStatus json:"status"
-	AdminID   uuid.UUID          json:"admin_id,omitempty"
-	Reason    string             json:"reason,omitempty"
-	Documents []string           json:"documents,omitempty"
-	CreatedAt time.Time          json:"created_at"
-	UpdatedAt time.Time          json:"updated_at"
+	CreatorID uuid.UUID `json:"creator_id"`
+	Status    VerificationStatus `json:"status"`
+	AdminID   uuid.UUID          `json:"admin_id,omitempty"`
+	Reason    string             `json:"reason,omitempty"`
+	Documents []string           `json:"documents,omitempty"`
+	CreatedAt time.Time          `json:"created_at"`
+	UpdatedAt time.Time          `json:"updated_at"`
 }
 
 func (s *VerificationService) RequestVerification(ctx context.Context, creatorID uuid.UUID, documents []string) error {

@@ -1,4 +1,4 @@
-﻿package repository
+package repository
 
 import (
 	"context"
@@ -29,8 +29,8 @@ func NewCategoryRepository(pool *pgxpool.Pool) CategoryRepository {
 }
 
 func (r *categoryRepository) Create(ctx context.Context, c *domain.Category) error {
-	query := INSERT INTO categories (id, name, slug, description, icon_url, color, parent_id, sort_order, active, created_at)
-		VALUES (, , , , , , , , , )
+	query := `INSERT INTO categories (id, name, slug, description, icon_url, color, parent_id, sort_order, active, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	_, err := r.pool.Exec(ctx, query,
 		c.ID, c.Name, c.Slug, c.Description, c.IconURL, c.Color,
 		c.ParentID, c.SortOrder, c.Active, c.CreatedAt,
@@ -45,7 +45,7 @@ func (r *categoryRepository) Create(ctx context.Context, c *domain.Category) err
 }
 
 func (r *categoryRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Category, error) {
-	row := r.pool.QueryRow(ctx, SELECT * FROM categories WHERE id = , id)
+	row := r.pool.QueryRow(ctx, `SELECT * FROM categories WHERE id = $1`, id)
 	c, err := scanCategory(row)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -57,7 +57,7 @@ func (r *categoryRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain
 }
 
 func (r *categoryRepository) GetBySlug(ctx context.Context, slug string) (*domain.Category, error) {
-	row := r.pool.QueryRow(ctx, SELECT * FROM categories WHERE slug = , slug)
+	row := r.pool.QueryRow(ctx, `SELECT * FROM categories WHERE slug = $1`, slug)
 	c, err := scanCategory(row)
 	if err != nil {
 		if err == pgx.ErrNoRows {
@@ -72,9 +72,9 @@ func (r *categoryRepository) List(ctx context.Context, activeOnly bool) ([]domai
 	var rows pgx.Rows
 	var err error
 	if activeOnly {
-		rows, err = r.pool.Query(ctx, SELECT * FROM categories WHERE active = true ORDER BY sort_order ASC, name ASC)
+		rows, err = r.pool.Query(ctx, `SELECT * FROM categories WHERE active = true ORDER BY sort_order ASC, name ASC`)
 	} else {
-		rows, err = r.pool.Query(ctx, SELECT * FROM categories ORDER BY sort_order ASC, name ASC)
+		rows, err = r.pool.Query(ctx, `SELECT * FROM categories ORDER BY sort_order ASC, name ASC`)
 	}
 	if err != nil {
 		return nil, fmt.Errorf("list categories: %w", err)
@@ -96,10 +96,10 @@ func (r *categoryRepository) List(ctx context.Context, activeOnly bool) ([]domai
 }
 
 func (r *categoryRepository) Update(ctx context.Context, c *domain.Category) error {
-	query := UPDATE categories SET name=, slug=, description=, icon_url=, color=, parent_id=, sort_order=, active= WHERE id=
+	query := `UPDATE categories SET name=$1, slug=$2, description=$3, icon_url=$4, color=$5, parent_id=$6, sort_order=$7, active=$8 WHERE id=$9`
 	_, err := r.pool.Exec(ctx, query,
-		c.ID, c.Name, c.Slug, c.Description, c.IconURL, c.Color,
-		c.ParentID, c.SortOrder, c.Active,
+		c.Name, c.Slug, c.Description, c.IconURL, c.Color,
+		c.ParentID, c.SortOrder, c.Active, c.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("update category: %w", err)
@@ -108,7 +108,7 @@ func (r *categoryRepository) Update(ctx context.Context, c *domain.Category) err
 }
 
 func (r *categoryRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.pool.Exec(ctx, DELETE FROM categories WHERE id = , id)
+	_, err := r.pool.Exec(ctx, `DELETE FROM categories WHERE id = $1`, id)
 	if err != nil {
 		return fmt.Errorf("delete category: %w", err)
 	}

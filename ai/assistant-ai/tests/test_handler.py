@@ -1,0 +1,28 @@
+import pytest
+from httpx import AsyncClient, ASGITransport
+
+from src.main import app
+
+
+@pytest.mark.asyncio
+async def test_post_chat_returns_200() -> None:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post("/v1/assistant/chat", json={"message": "Hello"})
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "reply" in data
+    assert "conversation_id" in data
+
+
+@pytest.mark.asyncio
+async def test_get_health_returns_200() -> None:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/health")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["service"] == "assistant-ai"

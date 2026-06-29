@@ -71,7 +71,6 @@ func (s *tokenService) GenerateRefreshToken() (string, int, error) {
 		return "", 0, fmt.Errorf("failed to generate random bytes: %w", err)
 	}
 	refreshToken := hex.EncodeToString(b)
-	hash := s.HashToken(refreshToken)
 	return refreshToken, len(refreshToken), nil
 }
 

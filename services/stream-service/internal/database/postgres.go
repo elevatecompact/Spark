@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
 )
@@ -87,10 +88,10 @@ func (db *PostgresDB) Exec(ctx context.Context, sql string, args ...interface{})
 	return tag.RowsAffected(), nil
 }
 
-func (db *PostgresDB) QueryRow(ctx context.Context, sql string, args ...interface{}) pgxpool.Row {
+func (db *PostgresDB) QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row {
 	return db.Pool.QueryRow(ctx, sql, args...)
 }
 
-func (db *PostgresDB) Query(ctx context.Context, sql string, args ...interface{}) (pgxpool.Rows, error) {
+func (db *PostgresDB) Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error) {
 	return db.Pool.Query(ctx, sql, args...)
 }

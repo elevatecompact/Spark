@@ -1,4 +1,4 @@
-﻿package repository
+package repository
 
 import (
 	"context"
@@ -28,8 +28,8 @@ func NewPortfolioRepository(pool *pgxpool.Pool) PortfolioRepository {
 }
 
 func (r *portfolioRepository) Create(ctx context.Context, item *domain.PortfolioItem) error {
-	query := INSERT INTO portfolio_items (id, creator_id, title, description, media_url, media_type, thumbnail_url, featured, sort_order, created_at)
-		VALUES (, , , , , , , , , )
+	query := `INSERT INTO portfolio_items (id, creator_id, title, description, media_url, media_type, thumbnail_url, featured, sort_order, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 	_, err := r.pool.Exec(ctx, query,
 		item.ID, item.CreatorID, item.Title, item.Description, item.MediaURL,
 		item.MediaType, item.ThumbnailURL, item.Featured, item.SortOrder, item.CreatedAt,
@@ -41,12 +41,12 @@ func (r *portfolioRepository) Create(ctx context.Context, item *domain.Portfolio
 }
 
 func (r *portfolioRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.PortfolioItem, error) {
-	row := r.pool.QueryRow(ctx, SELECT * FROM portfolio_items WHERE id = , id)
+	row := r.pool.QueryRow(ctx, `SELECT * FROM portfolio_items WHERE id = $1`, id)
 	return scanPortfolioItem(row)
 }
 
 func (r *portfolioRepository) GetByCreatorID(ctx context.Context, creatorID uuid.UUID) ([]domain.PortfolioItem, error) {
-	rows, err := r.pool.Query(ctx, SELECT * FROM portfolio_items WHERE creator_id =  ORDER BY featured DESC, sort_order ASC, created_at DESC, creatorID)
+	rows, err := r.pool.Query(ctx, `SELECT * FROM portfolio_items WHERE creator_id = $1 ORDER BY featured DESC, sort_order ASC, created_at DESC`, creatorID)
 	if err != nil {
 		return nil, fmt.Errorf("get portfolio items: %w", err)
 	}
@@ -67,10 +67,10 @@ func (r *portfolioRepository) GetByCreatorID(ctx context.Context, creatorID uuid
 }
 
 func (r *portfolioRepository) Update(ctx context.Context, item *domain.PortfolioItem) error {
-	query := UPDATE portfolio_items SET title=, description=, media_url=, media_type=, thumbnail_url=, featured=, sort_order= WHERE id=
+	query := `UPDATE portfolio_items SET title=$1, description=$2, media_url=$3, media_type=$4, thumbnail_url=$5, featured=$6, sort_order=$7 WHERE id=$8`
 	_, err := r.pool.Exec(ctx, query,
-		item.ID, item.Title, item.Description, item.MediaURL, item.MediaType,
-		item.ThumbnailURL, item.Featured, item.SortOrder,
+		item.Title, item.Description, item.MediaURL, item.MediaType,
+		item.ThumbnailURL, item.Featured, item.SortOrder, item.ID,
 	)
 	if err != nil {
 		return fmt.Errorf("update portfolio item: %w", err)
@@ -79,7 +79,7 @@ func (r *portfolioRepository) Update(ctx context.Context, item *domain.Portfolio
 }
 
 func (r *portfolioRepository) Delete(ctx context.Context, id uuid.UUID) error {
-	_, err := r.pool.Exec(ctx, DELETE FROM portfolio_items WHERE id = , id)
+	_, err := r.pool.Exec(ctx, `DELETE FROM portfolio_items WHERE id = $1`, id)
 	if err != nil {
 		return fmt.Errorf("delete portfolio item: %w", err)
 	}
@@ -93,10 +93,10 @@ func (r *portfolioRepository) SetFeatured(ctx context.Context, id, creatorID uui
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, UPDATE portfolio_items SET featured = false WHERE creator_id = , creatorID); err != nil {
+	if _, err := tx.Exec(ctx, `UPDATE portfolio_items SET featured = false WHERE creator_id = $1`, creatorID); err != nil {
 		return fmt.Errorf("unset featured: %w", err)
 	}
-	if _, err := tx.Exec(ctx, UPDATE portfolio_items SET featured = true WHERE id =  AND creator_id = , id, creatorID); err != nil {
+	if _, err := tx.Exec(ctx, `UPDATE portfolio_items SET featured = true WHERE id = $1 AND creator_id = $2`, id, creatorID); err != nil {
 		return fmt.Errorf("set featured: %w", err)
 	}
 

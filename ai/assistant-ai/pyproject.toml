@@ -1,0 +1,6 @@
+[project]
+name = "assistant-ai"
+version = "0.1.0"
+description = "Spark AI Assistant Microservice"
+requires-python = ">=3.11"
+dependencies = []

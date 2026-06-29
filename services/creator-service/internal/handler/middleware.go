@@ -121,8 +121,8 @@ func Logger(next http.Handler) http.Handler {
 }
 
 type jwtClaims struct {
-	Subject string json:"sub"
-	Role    string json:"role"
+	Subject string `json:"sub"`
+	Role    string `json:"role"`
 	jwt.RegisteredClaims
 }
 

@@ -1,0 +1,28 @@
+import pytest
+from httpx import ASGITransport, AsyncClient
+
+from src.main import app
+
+
+@pytest.mark.asyncio
+async def test_generate_returns_200() -> None:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.post(
+            "/v1/thumbnail/generate",
+            json={"video_url": "https://example.com/video.mp4"},
+        )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["thumbnail_url"].startswith("https://cdn.spark.dev/media/thumbnails/")
+
+
+@pytest.mark.asyncio
+async def test_health_returns_200() -> None:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        response = await client.get("/health")
+    assert response.status_code == 200
+    data = response.json()
+    assert data["status"] == "ok"
+    assert data["service"] == "thumbnail-ai"

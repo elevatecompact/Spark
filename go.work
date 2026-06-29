@@ -1,10 +1,6 @@
-go 1.22
+go 1.25.0
 
 use (
-	services/identity-service
-	services/creator-service
-	services/stream-service
-
 	packages/auth
 	packages/config
 	packages/database
@@ -14,4 +10,29 @@ use (
 	packages/types
 	packages/utils
 	packages/validators
+	services/creator-service
+	services/identity-service
+	services/stream-service
+	services/viewer-service
+	services/chat-service
+	services/wallet-service
+	services/messaging-service
+	services/subscription-service
+	services/gift-service
+	services/payment-service
+	services/analytics-service
+	services/notification-service
+	services/recommendation-service
+	services/search-service
+	services/translation-service
+	services/moderation-service
+	services/community-service
+	services/event-service
+	services/competition-service
+	services/advertising-service
+	services/commerce-service
+	services/media-service
+	services/licensing-service
+	services/discovery-service
+	services/trust-service
 )

@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS funnels;
+DROP TABLE IF EXISTS report_templates;
+DROP TABLE IF EXISTS reports;
+DROP TABLE IF EXISTS dashboards;
