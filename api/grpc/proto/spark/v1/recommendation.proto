@@ -1,0 +1,103 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service RecommendationService {
+  rpc GetFeed(GetFeedRequest) returns (GetFeedResponse);
+  rpc GetTrending(GetTrendingRequest) returns (GetTrendingResponse);
+  rpc GetUpNext(GetUpNextRequest) returns (GetUpNextResponse);
+  rpc GetSimilarContent(GetSimilarContentRequest) returns (GetSimilarContentResponse);
+  rpc GetCreatorRecommendations(GetCreatorRecommendationsRequest) returns (GetCreatorRecommendationsResponse);
+  rpc RecordInteraction(RecordInteractionRequest) returns (Empty);
+  rpc GetPersonalizedCategories(GetPersonalizedCategoriesRequest) returns (GetPersonalizedCategoriesResponse);
+}
+
+message FeedItem {
+  string id = 1;
+  string stream_id = 2;
+  string creator_id = 3;
+  string creator_username = 4;
+  string creator_avatar = 5;
+  string title = 6;
+  string thumbnail_url = 7;
+  string category = 8;
+  int64 viewer_count = 9;
+  bool is_live = 10;
+  double score = 11;
+  string reason = 12;
+}
+
+message GetFeedRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string feed_type = 4;
+}
+
+message GetFeedResponse {
+  repeated FeedItem items = 1;
+  Pagination pagination = 2;
+}
+
+message GetTrendingRequest {
+  string category = 1;
+  int32 limit = 2;
+  string time_range = 3;
+}
+
+message GetTrendingResponse {
+  repeated FeedItem items = 1;
+}
+
+message GetUpNextRequest {
+  string stream_id = 1;
+  int32 limit = 2;
+}
+
+message GetUpNextResponse {
+  repeated FeedItem items = 1;
+}
+
+message GetSimilarContentRequest {
+  string stream_id = 1;
+  int32 limit = 2;
+}
+
+message GetSimilarContentResponse {
+  repeated FeedItem items = 1;
+}
+
+message GetCreatorRecommendationsRequest {
+  string user_id = 1;
+  int32 limit = 2;
+}
+
+message GetCreatorRecommendationsResponse {
+  repeated string creator_ids = 1;
+}
+
+message Interaction {
+  string user_id = 1;
+  string stream_id = 2;
+  string interaction_type = 3;
+  double weight = 4;
+  google.protobuf.Timestamp timestamp = 5;
+}
+
+message RecordInteractionRequest {
+  Interaction interaction = 1;
+}
+
+message GetPersonalizedCategoriesRequest {
+  string user_id = 1;
+  int32 limit = 2;
+}
+
+message GetPersonalizedCategoriesResponse {
+  repeated string categories = 1;
+}

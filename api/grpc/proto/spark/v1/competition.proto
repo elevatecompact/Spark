@@ -1,0 +1,222 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service CompetitionService {
+  rpc CreateCompetition(CreateCompetitionRequest) returns (Competition);
+  rpc GetCompetition(GetCompetitionRequest) returns (Competition);
+  rpc UpdateCompetition(UpdateCompetitionRequest) returns (Competition);
+  rpc DeleteCompetition(DeleteCompetitionRequest) returns (Empty);
+  rpc ListCompetitions(ListCompetitionsRequest) returns (ListCompetitionsResponse);
+  rpc RegisterParticipant(RegisterParticipantRequest) returns (Participant);
+  rpc UnregisterParticipant(UnregisterParticipantRequest) returns (Empty);
+  rpc GetParticipants(GetParticipantsRequest) returns (GetParticipantsResponse);
+  rpc SubmitEntry(SubmitEntryRequest) returns (Entry);
+  rpc SubmitScore(SubmitScoreRequest) returns (ScoreEntry);
+  rpc GetLeaderboard(GetLeaderboardRequest) returns (GetLeaderboardResponse);
+  rpc CreateJudgingPanel(CreateJudgingPanelRequest) returns (JudgingPanel);
+  rpc SubmitJudgment(SubmitJudgmentRequest) returns (Judgment);
+  rpc GetResults(GetResultsRequest) returns (CompetitionResults);
+  rpc DistributePrizes(DistributePrizesRequest) returns (Empty);
+}
+
+message Competition {
+  string id = 1;
+  string creator_id = 2;
+  string title = 3;
+  string description = 4;
+  string type = 5;
+  string status = 6;
+  string category = 7;
+  string rules = 8;
+  repeated string prizes = 9;
+  google.protobuf.Timestamp registration_starts = 10;
+  google.protobuf.Timestamp registration_ends = 11;
+  google.protobuf.Timestamp starts_at = 12;
+  google.protobuf.Timestamp ends_at = 13;
+  int64 max_participants = 14;
+  int64 participant_count = 15;
+  bool is_featured = 16;
+  google.protobuf.Timestamp created_at = 17;
+}
+
+message CreateCompetitionRequest {
+  string creator_id = 1;
+  string title = 2;
+  string description = 3;
+  string type = 4;
+  string category = 5;
+  string rules = 6;
+  repeated string prizes = 7;
+  google.protobuf.Timestamp registration_starts = 8;
+  google.protobuf.Timestamp registration_ends = 9;
+  google.protobuf.Timestamp starts_at = 10;
+  google.protobuf.Timestamp ends_at = 11;
+  int64 max_participants = 12;
+}
+
+message GetCompetitionRequest {
+  string competition_id = 1;
+}
+
+message UpdateCompetitionRequest {
+  string competition_id = 1;
+  string title = 2;
+  string description = 3;
+  string rules = 4;
+  repeated string prizes = 5;
+  string status = 6;
+}
+
+message DeleteCompetitionRequest {
+  string competition_id = 1;
+}
+
+message ListCompetitionsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string creator_id = 3;
+  string type = 4;
+  string status = 5;
+  string category = 6;
+}
+
+message ListCompetitionsResponse {
+  repeated Competition competitions = 1;
+  Pagination pagination = 2;
+}
+
+message Participant {
+  string id = 1;
+  string competition_id = 2;
+  string user_id = 3;
+  string username = 4;
+  string status = 5;
+  google.protobuf.Timestamp registered_at = 6;
+}
+
+message RegisterParticipantRequest {
+  string competition_id = 1;
+  string user_id = 2;
+}
+
+message UnregisterParticipantRequest {
+  string competition_id = 1;
+  string user_id = 2;
+}
+
+message GetParticipantsRequest {
+  string competition_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetParticipantsResponse {
+  repeated Participant participants = 1;
+  Pagination pagination = 2;
+}
+
+message Entry {
+  string id = 1;
+  string competition_id = 2;
+  string participant_id = 3;
+  string title = 4;
+  string description = 5;
+  repeated string media_urls = 6;
+  string status = 7;
+  google.protobuf.Timestamp submitted_at = 8;
+}
+
+message SubmitEntryRequest {
+  string competition_id = 1;
+  string participant_id = 2;
+  string title = 3;
+  string description = 4;
+  repeated string media_urls = 5;
+}
+
+message ScoreEntry {
+  string player_id = 1;
+  double score = 2;
+  string metadata = 3;
+  int64 rank = 4;
+}
+
+message SubmitScoreRequest {
+  string competition_id = 1;
+  string participant_id = 2;
+  double score = 3;
+  map<string, string> metadata = 4;
+}
+
+message GetLeaderboardRequest {
+  string competition_id = 1;
+  int32 limit = 2;
+  int32 offset = 3;
+}
+
+message LeaderboardEntry {
+  int64 rank = 1;
+  string participant_id = 2;
+  string username = 3;
+  double score = 4;
+}
+
+message GetLeaderboardResponse {
+  repeated LeaderboardEntry entries = 1;
+  int64 total = 2;
+}
+
+message JudgingPanel {
+  string id = 1;
+  string competition_id = 2;
+  string name = 3;
+  repeated string judge_ids = 4;
+  repeated string criteria = 5;
+  double max_score = 6;
+}
+
+message CreateJudgingPanelRequest {
+  string competition_id = 1;
+  string name = 2;
+  repeated string judge_ids = 3;
+  repeated string criteria = 4;
+  double max_score = 5;
+}
+
+message Judgment {
+  string id = 1;
+  string entry_id = 2;
+  string judge_id = 3;
+  map<string, double> scores = 4;
+  string comment = 5;
+  double total_score = 6;
+}
+
+message SubmitJudgmentRequest {
+  string entry_id = 1;
+  string judge_id = 2;
+  map<string, double> scores = 3;
+  string comment = 4;
+}
+
+message CompetitionResults {
+  string competition_id = 1;
+  string title = 2;
+  repeated LeaderboardEntry winners = 3;
+  repeated string prize_distribution = 4;
+  google.protobuf.Timestamp finalized_at = 5;
+}
+
+message GetResultsRequest {
+  string competition_id = 1;
+}
+
+message DistributePrizesRequest {
+  string competition_id = 1;
+}

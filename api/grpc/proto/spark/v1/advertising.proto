@@ -1,0 +1,188 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service AdvertisingService {
+  rpc CreateCampaign(CreateCampaignRequest) returns (Campaign);
+  rpc GetCampaign(GetCampaignRequest) returns (Campaign);
+  rpc UpdateCampaign(UpdateCampaignRequest) returns (Campaign);
+  rpc ListCampaigns(ListCampaignsRequest) returns (ListCampaignsResponse);
+  rpc CreateAdUnit(CreateAdUnitRequest) returns (AdUnit);
+  rpc GetAdUnits(GetAdUnitsRequest) returns (GetAdUnitsResponse);
+  rpc ApproveAdUnit(ApproveAdUnitRequest) returns (AdUnit);
+  rpc RequestAd(RequestAdRequest) returns (AdResponse);
+  rpc RecordImpression(RecordImpressionRequest) returns (Empty);
+  rpc RecordClick(RecordClickRequest) returns (Empty);
+  rpc GetPerformance(GetPerformanceRequest) returns (CampaignPerformance);
+  rpc GetRevenueStats(GetRevenueStatsRequest) returns (RevenueStats);
+}
+
+message Campaign {
+  string id = 1;
+  string advertiser_id = 2;
+  string name = 3;
+  string objective = 4;
+  string status = 5;
+  Money budget = 6;
+  Money daily_cap = 7;
+  Money spent = 8;
+  string bid_type = 9;
+  Money bid_amount = 10;
+  repeated string target_audience = 11;
+  repeated string target_categories = 12;
+  repeated string target_locations = 13;
+  google.protobuf.Timestamp starts_at = 14;
+  google.protobuf.Timestamp ends_at = 15;
+  google.protobuf.Timestamp created_at = 16;
+  google.protobuf.Timestamp updated_at = 17;
+}
+
+message CreateCampaignRequest {
+  string advertiser_id = 1;
+  string name = 2;
+  string objective = 3;
+  Money budget = 4;
+  Money daily_cap = 5;
+  string bid_type = 6;
+  Money bid_amount = 7;
+  repeated string target_audience = 8;
+  repeated string target_categories = 9;
+  repeated string target_locations = 10;
+  google.protobuf.Timestamp starts_at = 11;
+  google.protobuf.Timestamp ends_at = 12;
+}
+
+message GetCampaignRequest {
+  string campaign_id = 1;
+}
+
+message UpdateCampaignRequest {
+  string campaign_id = 1;
+  string name = 2;
+  Money budget = 3;
+  Money daily_cap = 4;
+  string bid_type = 5;
+  Money bid_amount = 6;
+  repeated string target_audience = 7;
+  repeated string target_categories = 8;
+  repeated string target_locations = 9;
+  string status = 10;
+}
+
+message ListCampaignsRequest {
+  string advertiser_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string status = 4;
+}
+
+message ListCampaignsResponse {
+  repeated Campaign campaigns = 1;
+  Pagination pagination = 2;
+}
+
+message AdUnit {
+  string id = 1;
+  string campaign_id = 2;
+  string name = 3;
+  string type = 4;
+  string format = 5;
+  string creative_url = 6;
+  string click_url = 7;
+  string status = 8;
+  int32 width = 9;
+  int32 height = 10;
+  int64 impressions = 11;
+  int64 clicks = 12;
+  google.protobuf.Timestamp created_at = 13;
+}
+
+message CreateAdUnitRequest {
+  string campaign_id = 1;
+  string name = 2;
+  string type = 3;
+  string format = 4;
+  string creative_url = 5;
+  string click_url = 6;
+  int32 width = 7;
+  int32 height = 8;
+}
+
+message GetAdUnitsRequest {
+  string campaign_id = 1;
+}
+
+message GetAdUnitsResponse {
+  repeated AdUnit ad_units = 1;
+}
+
+message ApproveAdUnitRequest {
+  string ad_unit_id = 1;
+  bool approved = 2;
+}
+
+message RequestAdRequest {
+  string placement = 1;
+  string category = 2;
+  string user_id = 3;
+  int32 width = 4;
+  int32 height = 5;
+}
+
+message AdResponse {
+  string ad_unit_id = 1;
+  string creative_url = 2;
+  string click_url = 3;
+  string tracking_impression_url = 4;
+  string tracking_click_url = 5;
+  int32 width = 6;
+  int32 height = 7;
+}
+
+message RecordImpressionRequest {
+  string ad_unit_id = 1;
+  string request_id = 2;
+  string user_id = 3;
+}
+
+message RecordClickRequest {
+  string ad_unit_id = 1;
+  string request_id = 2;
+  string user_id = 3;
+}
+
+message CampaignPerformance {
+  string campaign_id = 1;
+  int64 total_impressions = 2;
+  int64 total_clicks = 3;
+  double ctr = 4;
+  Money total_spent = 5;
+  double cpm = 6;
+  double cpc = 7;
+  repeated DataPoint impression_history = 8;
+  repeated DataPoint click_history = 9;
+}
+
+message GetPerformanceRequest {
+  string campaign_id = 1;
+  DateRange range = 2;
+}
+
+message RevenueStats {
+  Money total_revenue = 1;
+  Money pending_revenue = 2;
+  Money paid_revenue = 3;
+  int64 total_campaigns = 4;
+  int64 active_campaigns = 5;
+  repeated DataPoint revenue_history = 6;
+}
+
+message GetRevenueStatsRequest {
+  string advertiser_id = 1;
+  DateRange range = 2;
+}

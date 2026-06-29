@@ -1,0 +1,162 @@
+# Spark Webhook Event Schema
+# Standard format for outgoing webhooks.
+
+webhook:
+  version: "1.0"
+  format: cloud-events
+
+event_types:
+  - name: stream.started
+    description: A stream has started
+    schema:
+      stream_id: string
+      creator_id: string
+      title: string
+      started_at: timestamp
+
+  - name: stream.ended
+    description: A stream has ended
+    schema:
+      stream_id: string
+      creator_id: string
+      duration_seconds: int64
+      peak_viewers: int64
+      ended_at: timestamp
+
+  - name: stream.viewer_count_changed
+    description: Viewer count changed significantly
+    schema:
+      stream_id: string
+      creator_id: string
+      viewer_count: int64
+      peak_viewers: int64
+
+  - name: user.followed
+    description: A user followed a creator
+    schema:
+      follower_id: string
+      creator_id: string
+      followed_at: timestamp
+
+  - name: user.subscribed
+    description: A user subscribed to a creator
+    schema:
+      user_id: string
+      creator_id: string
+      plan_id: string
+      plan_name: string
+      amount: money
+      subscribed_at: timestamp
+
+  - name: user.unsubscribed
+    description: A user unsubscribed from a creator
+    schema:
+      user_id: string
+      creator_id: string
+      plan_id: string
+      canceled_at: timestamp
+
+  - name: gift.sent
+    description: A gift was sent during a stream
+    schema:
+      from_user_id: string
+      to_user_id: string
+      stream_id: string
+      gift_item_id: string
+      gift_item_name: string
+      quantity: int64
+      total_amount: money
+      is_anonymous: boolean
+
+  - name: payment.completed
+    description: A payment was completed
+    schema:
+      payment_intent_id: string
+      user_id: string
+      amount: money
+      status: string
+      completed_at: timestamp
+
+  - name: payment.refunded
+    description: A payment was refunded
+    schema:
+      payment_intent_id: string
+      user_id: string
+      amount: money
+      reason: string
+      refunded_at: timestamp
+
+  - name: notification.created
+    description: A notification was created for a user
+    schema:
+      notification_id: string
+      user_id: string
+      type: string
+      title: string
+      created_at: timestamp
+
+  - name: moderation.action_taken
+    description: A moderation action was taken
+    schema:
+      action_id: string
+      target_id: string
+      target_type: string
+      action_type: string
+      moderator_id: string
+      reason: string
+      created_at: timestamp
+
+  - name: community.created
+    description: A community was created
+    schema:
+      community_id: string
+      owner_id: string
+      name: string
+      is_private: boolean
+      created_at: timestamp
+
+  - name: event.created
+    description: An event was created
+    schema:
+      event_id: string
+      creator_id: string
+      title: string
+      type: string
+      start_date: timestamp
+      end_date: timestamp
+
+  - name: order.created
+    description: An order was placed
+    schema:
+      order_id: string
+      user_id: string
+      merchant_id: string
+      total: money
+      item_count: int64
+      created_at: timestamp
+
+  - name: order.fulfilled
+    description: An order was fulfilled
+    schema:
+      order_id: string
+      fulfillment_status: string
+      fulfilled_at: timestamp
+
+  - name: competition.completed
+    description: A competition was completed
+    schema:
+      competition_id: string
+      title: string
+      winner_id: string
+      winner_username: string
+      completed_at: timestamp
+
+  - name: fraud.detected
+    description: Fraud was detected
+    schema:
+      case_id: string
+      user_id: string
+      fraud_type: string
+      severity: string
+      fraud_score: float
+      detected_at: timestamp

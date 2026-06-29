@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stream-service
+  namespace: spark
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: stream-service
+  template:
+    metadata:
+      labels:
+        app: stream-service
+    spec:
+      containers:
+        - name: stream-service
+          image: spark/stream-service:latest
+          ports:
+            - containerPort: 8081
+            - containerPort: 1935
+          env:
+            - name: SPARK_DATABASE_URL
+              value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/spark_stream?sslmode=disable"
+            - name: SPARK_REDIS_URL
+              value: "redis://$(REDIS_HOST):$(REDIS_PORT)/0"
+            - name: SPARK_KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: spark-config
+                  key: KAFKA_BROKERS
+            - name: SPARK_RTMP_LISTEN_ADDR
+              value: "0.0.0.0:1935"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: stream-service
+  namespace: spark
+spec:
+  ports:
+    - name: http
+      port: 8081
+    - name: rtmp
+      port: 1935
+  selector:
+    app: stream-service

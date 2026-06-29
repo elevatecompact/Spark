@@ -1,0 +1,249 @@
+# Spark API Gateway Configuration
+# Routes external requests to internal microservices.
+
+routes:
+  # Identity & Auth
+  - path: /api/v1/auth/**
+    service: identity-service:8080
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/users/**
+    service: identity-service:8080
+    methods: [GET, POST, PUT, DELETE]
+
+  # Creator
+  - path: /api/v1/creators/**
+    service: creator-service:8083
+    methods: [GET, POST, PUT, DELETE]
+
+  # Stream
+  - path: /api/v1/streams/**
+    service: stream-service:8081
+    methods: [GET, POST, PUT, DELETE]
+
+  # Viewer / Follows
+  - path: /api/v1/viewers/**
+    service: viewer-service:4003
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/follows/**
+    service: viewer-service:4003
+    methods: [GET, POST, DELETE]
+
+  # Chat
+  - path: /api/v1/chat/**
+    service: chat-service:4005
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /ws/chat/**
+    service: chat-service:4006
+    methods: [GET]
+
+  # Wallet
+  - path: /api/v1/wallet/**
+    service: wallet-service:4009
+    methods: [GET, POST, PUT, DELETE]
+
+  # Messaging
+  - path: /api/v1/messages/**
+    service: messaging-service:4007
+    methods: [GET, POST, DELETE]
+
+  - path: /ws/messages/**
+    service: messaging-service:4008
+    methods: [GET]
+
+  # Subscription
+  - path: /api/v1/subscriptions/**
+    service: subscription-service:4010
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/plans/**
+    service: subscription-service:4010
+    methods: [GET, POST, PUT, DELETE]
+
+  # Gift
+  - path: /api/v1/gifts/**
+    service: gift-service:4011
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/gift-cards/**
+    service: gift-service:4011
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/gift-items/**
+    service: gift-service:4011
+    methods: [GET, POST]
+
+  # Payment
+  - path: /api/v1/payments/**
+    service: payment-service:4012
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/payment-methods/**
+    service: payment-service:4012
+    methods: [GET, POST, DELETE]
+
+  - path: /webhooks/payments/**
+    service: payment-service:4012
+    methods: [POST]
+
+  # Analytics
+  - path: /api/v1/analytics/**
+    service: analytics-service:4013
+    methods: [GET, POST, PUT]
+
+  - path: /api/v1/events/track
+    service: analytics-service:4013
+    methods: [POST]
+
+  # Notification
+  - path: /api/v1/notifications/**
+    service: notification-service:4014
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/notification-preferences/**
+    service: notification-service:4014
+    methods: [GET, PUT]
+
+  - path: /api/v1/devices/**
+    service: notification-service:4014
+    methods: [GET, POST, DELETE]
+
+  # Recommendation
+  - path: /api/v1/recommendations/**
+    service: recommendation-service:8087
+    methods: [GET, POST]
+
+  - path: /api/v1/feeds/**
+    service: recommendation-service:8087
+    methods: [GET]
+
+  # Search
+  - path: /api/v1/search/**
+    service: search-service:8088
+    methods: [GET, POST]
+
+  - path: /api/v1/synonyms/**
+    service: search-service:8088
+    methods: [GET, POST, DELETE]
+
+  # Translation
+  - path: /api/v1/translations/**
+    service: translation-service:8089
+    methods: [GET, POST, PUT]
+
+  # Moderation
+  - path: /api/v1/moderation/**
+    service: moderation-service:8090
+    methods: [GET, POST, PUT]
+
+  - path: /api/v1/reports/**
+    service: moderation-service:8090
+    methods: [GET, POST, PUT]
+
+  # Community
+  - path: /api/v1/communities/**
+    service: community-service:8091
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/posts/**
+    service: community-service:8091
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/comments/**
+    service: community-service:8091
+    methods: [GET, POST, DELETE]
+
+  # Event
+  - path: /api/v1/events/**
+    service: event-service:8092
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/tickets/**
+    service: event-service:8092
+    methods: [GET, POST]
+
+  # Competition
+  - path: /api/v1/competitions/**
+    service: competition-service:8093
+    methods: [GET, POST, PUT, DELETE]
+
+  # Advertising
+  - path: /api/v1/advertising/**
+    service: advertising-service:8094
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/ad-requests
+    service: advertising-service:8094
+    methods: [POST]
+
+  # Commerce
+  - path: /api/v1/products/**
+    service: commerce-service:4023
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/cart/**
+    service: commerce-service:4023
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/orders/**
+    service: commerce-service:4023
+    methods: [GET, POST, PUT]
+
+  - path: /api/v1/reviews/**
+    service: commerce-service:4023
+    methods: [GET, POST]
+
+  # Media
+  - path: /api/v1/media/**
+    service: media-service:4024
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/uploads/**
+    service: media-service:4024
+    methods: [GET, POST, PUT, DELETE]
+
+  # Licensing
+  - path: /api/v1/licenses/**
+    service: licensing-service:4025
+    methods: [GET, POST, PUT, DELETE]
+
+  - path: /api/v1/royalties/**
+    service: licensing-service:4025
+    methods: [GET, POST]
+
+  # Discovery
+  - path: /api/v1/discovery/**
+    service: discovery-service:4026
+    methods: [GET, POST]
+
+  - path: /api/v1/collections/**
+    service: discovery-service:4026
+    methods: [GET]
+
+  - path: /api/v1/categories/**
+    service: discovery-service:4026
+    methods: [GET]
+
+  # Trust & Safety
+  - path: /api/v1/trust/**
+    service: trust-service:4027
+    methods: [GET, POST, PUT]
+
+  - path: /api/v1/fraud/**
+    service: trust-service:4027
+    methods: [GET, POST, PUT]
+
+  # AI Services (internal, not exposed through gateway)
+  # Ranking AI: 8100
+  # Fraud AI: 8101
+  # Moderation AI: 8102
+  # Translation AI: 8103
+  # Voice AI: 8104
+  # Vision AI: 8105
+  # Clip AI: 8106
+  # Thumbnail AI: 8107
+  # Assistant AI: 8108
+  # Recommendation AI: 8109
+  # Creator AI: 8110

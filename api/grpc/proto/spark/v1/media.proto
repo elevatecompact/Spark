@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service MediaService {
+  rpc InitiateUpload(InitiateUploadRequest) returns (UploadSession);
+  rpc UploadPart(UploadPartRequest) returns (UploadPartResponse);
+  rpc CompleteUpload(CompleteUploadRequest) returns (MediaAsset);
+  rpc CancelUpload(CancelUploadRequest) returns (Empty);
+  rpc GetUploadStatus(GetUploadStatusRequest) returns (UploadSession);
+  rpc GetMediaAsset(GetMediaAssetRequest) returns (MediaAsset);
+  rpc DeleteMediaAsset(DeleteMediaAssetRequest) returns (Empty);
+  rpc GetStorageUsage(GetStorageUsageRequest) returns (StorageUsage);
+  rpc GetTranscodeStatus(GetTranscodeStatusRequest) returns (TranscodeStatus);
+  rpc GetThumbnails(GetThumbnailsRequest) returns (GetThumbnailsResponse);
+  rpc GetDRMLicense(GetDRMLicenseRequest) returns (DRMLicense);
+  rpc GetPlaybackURL(GetPlaybackURLRequest) returns (PlaybackURL);
+}
+
+message UploadSession {
+  string id = 1;
+  string user_id = 2;
+  string file_name = 3;
+  string mime_type = 4;
+  int64 file_size = 5;
+  int64 uploaded_bytes = 6;
+  int32 total_parts = 7;
+  int32 uploaded_parts = 8;
+  string status = 9;
+  repeated string upload_urls = 10;
+  google.protobuf.Timestamp expires_at = 11;
+  google.protobuf.Timestamp created_at = 12;
+}
+
+message InitiateUploadRequest {
+  string user_id = 1;
+  string file_name = 2;
+  string mime_type = 3;
+  int64 file_size = 4;
+  string media_type = 5;
+}
+
+message UploadPartRequest {
+  string upload_id = 1;
+  int32 part_number = 2;
+  bytes data = 3;
+}
+
+message UploadPartResponse {
+  string etag = 1;
+  int32 part_number = 2;
+}
+
+message CompleteUploadRequest {
+  string upload_id = 1;
+  repeated CompletedPart parts = 2;
+}
+
+message CompletedPart {
+  int32 part_number = 1;
+  string etag = 2;
+}
+
+message CancelUploadRequest {
+  string upload_id = 1;
+}
+
+message GetUploadStatusRequest {
+  string upload_id = 1;
+}
+
+message MediaAsset {
+  string id = 1;
+  string user_id = 2;
+  string file_name = 3;
+  string mime_type = 4;
+  int64 file_size = 5;
+  string media_type = 6;
+  string storage_url = 7;
+  string cdn_url = 8;
+  string status = 9;
+  repeated MediaRendition renditions = 10;
+  repeated string thumbnail_urls = 11;
+  int64 duration_seconds = 12;
+  int32 width = 13;
+  int32 height = 14;
+  google.protobuf.Timestamp created_at = 15;
+}
+
+message MediaRendition {
+  string name = 1;
+  string url = 2;
+  int32 bitrate = 3;
+  int32 width = 4;
+  int32 height = 5;
+  string format = 6;
+}
+
+message GetMediaAssetRequest {
+  string media_id = 1;
+}
+
+message DeleteMediaAssetRequest {
+  string media_id = 1;
+}
+
+message StorageUsage {
+  string user_id = 1;
+  int64 used_bytes = 2;
+  int64 total_bytes = 3;
+  int64 total_assets = 4;
+}
+
+message GetStorageUsageRequest {
+  string user_id = 1;
+}
+
+message TranscodeStatus {
+  string media_id = 1;
+  string status = 2;
+  double progress = 3;
+  repeated string completed_renditions = 4;
+  string error = 5;
+}
+
+message GetTranscodeStatusRequest {
+  string media_id = 1;
+}
+
+message GetThumbnailsRequest {
+  string media_id = 1;
+}
+
+message Thumbnail {
+  string url = 1;
+  int32 width = 2;
+  int32 height = 3;
+  string label = 4;
+}
+
+message GetThumbnailsResponse {
+  repeated Thumbnail thumbnails = 1;
+}
+
+message DRMLicense {
+  string media_id = 1;
+  string license_url = 2;
+  string certificate_url = 3;
+  string scheme = 4;
+  map<string, string> custom_data = 5;
+}
+
+message GetDRMLicenseRequest {
+  string media_id = 1;
+  string user_id = 2;
+  string content_id = 3;
+}
+
+message PlaybackURL {
+  string media_id = 1;
+  string url = 2;
+  string protocol = 3;
+  map<string, string> headers = 4;
+}
+
+message GetPlaybackURLRequest {
+  string media_id = 1;
+  string user_id = 2;
+  string preferred_protocol = 3;
+}

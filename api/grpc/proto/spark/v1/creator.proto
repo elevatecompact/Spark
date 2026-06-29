@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service CreatorService {
+  rpc GetCreator(GetCreatorRequest) returns (Creator);
+  rpc UpdateCreator(UpdateCreatorRequest) returns (Creator);
+  rpc GetCreatorStats(GetCreatorStatsRequest) returns (CreatorStats);
+  rpc GetDashboard(DashboardRequest) returns (DashboardResponse);
+}
+
+message Creator {
+  string id = 1;
+  string user_id = 2;
+  string username = 3;
+  string display_name = 4;
+  string avatar_url = 5;
+  string banner_url = 6;
+  string bio = 7;
+  string category = 8;
+  repeated string languages = 9;
+  bool is_verified = 10;
+  bool is_mature = 11;
+  int64 follower_count = 12;
+  int64 subscriber_count = 13;
+  int64 total_streams = 14;
+  int64 total_viewers = 15;
+  repeated string social_links = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+}
+
+message GetCreatorRequest {
+  string creator_id = 1;
+}
+
+message UpdateCreatorRequest {
+  string creator_id = 1;
+  string display_name = 2;
+  string bio = 3;
+  string avatar_url = 4;
+  string banner_url = 5;
+  string category = 6;
+  repeated string languages = 7;
+  bool is_mature = 8;
+}
+
+message CreatorStats {
+  string creator_id = 1;
+  int64 total_streams = 2;
+  int64 total_viewers = 3;
+  int64 total_hours_streamed = 4;
+  int64 total_followers = 5;
+  int64 total_subscribers = 6;
+  int64 total_earnings = 7;
+  int64 avg_viewers = 8;
+  int64 peak_viewers = 9;
+  google.protobuf.Timestamp last_streamed_at = 10;
+}
+
+message GetCreatorStatsRequest {
+  string creator_id = 1;
+  DateRange range = 2;
+}
+
+message DashboardRequest {
+  string creator_id = 1;
+}
+
+message DashboardResponse {
+  CreatorStats stats = 1;
+  repeated Stream recent_streams = 2;
+  repeated int64 viewer_history = 3;
+  repeated int64 earning_history = 4;
+}

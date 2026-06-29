@@ -1,0 +1,295 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service CommerceService {
+  rpc CreateProduct(CreateProductRequest) returns (Product);
+  rpc GetProduct(GetProductRequest) returns (Product);
+  rpc UpdateProduct(UpdateProductRequest) returns (Product);
+  rpc DeleteProduct(DeleteProductRequest) returns (Empty);
+  rpc ListProducts(ListProductsRequest) returns (ListProductsResponse);
+  rpc CreateVariant(CreateVariantRequest) returns (Variant);
+  rpc UpdateVariant(UpdateVariantRequest) returns (Variant);
+  rpc DeleteVariant(DeleteVariantRequest) returns (Empty);
+  rpc AddToCart(AddToCartRequest) returns (Cart);
+  rpc GetCart(GetCartRequest) returns (Cart);
+  rpc UpdateCartItem(UpdateCartItemRequest) returns (Cart);
+  rpc RemoveFromCart(RemoveFromCartRequest) returns (Cart);
+  rpc CreateCheckout(CreateCheckoutRequest) returns (Checkout);
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc ListOrders(ListOrdersRequest) returns (ListOrdersResponse);
+  rpc UpdateOrderStatus(UpdateOrderStatusRequest) returns (Order);
+  rpc FulfillDigital(FulfillDigitalRequest) returns (Empty);
+  rpc CreateReview(CreateReviewRequest) returns (Review);
+  rpc GetReviews(GetReviewsRequest) returns (GetReviewsResponse);
+  rpc GetMerchantDashboard(GetMerchantDashboardRequest) returns (MerchantDashboard);
+}
+
+message Product {
+  string id = 1;
+  string merchant_id = 2;
+  string name = 3;
+  string description = 4;
+  string type = 5;
+  string category = 6;
+  Money price = 7;
+  Money compare_at_price = 8;
+  repeated string images = 9;
+  repeated Variant variants = 10;
+  string status = 11;
+  int64 total_sold = 12;
+  double avg_rating = 13;
+  int64 review_count = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}
+
+message Variant {
+  string id = 1;
+  string product_id = 2;
+  string name = 3;
+  string sku = 4;
+  Money price = 5;
+  int64 quantity = 6;
+  int64 reserved = 7;
+  bool is_available = 8;
+  map<string, string> attributes = 9;
+}
+
+message CreateProductRequest {
+  string merchant_id = 1;
+  string name = 2;
+  string description = 3;
+  string type = 4;
+  string category = 5;
+  Money price = 6;
+  Money compare_at_price = 7;
+  repeated string images = 8;
+}
+
+message GetProductRequest {
+  string product_id = 1;
+}
+
+message UpdateProductRequest {
+  string product_id = 1;
+  string name = 2;
+  string description = 3;
+  string category = 4;
+  Money price = 5;
+  Money compare_at_price = 6;
+  repeated string images = 7;
+  string status = 8;
+}
+
+message DeleteProductRequest {
+  string product_id = 1;
+}
+
+message ListProductsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string merchant_id = 3;
+  string category = 4;
+  string type = 5;
+  string status = 6;
+  string search = 7;
+  string sort = 8;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+  Pagination pagination = 2;
+}
+
+message CreateVariantRequest {
+  string product_id = 1;
+  string name = 2;
+  string sku = 3;
+  Money price = 4;
+  int64 quantity = 5;
+  map<string, string> attributes = 6;
+}
+
+message UpdateVariantRequest {
+  string variant_id = 1;
+  string name = 2;
+  string sku = 3;
+  Money price = 4;
+  int64 quantity = 5;
+  map<string, string> attributes = 6;
+}
+
+message DeleteVariantRequest {
+  string variant_id = 1;
+}
+
+message CartItem {
+  string id = 1;
+  string product_id = 2;
+  string variant_id = 3;
+  string product_name = 4;
+  string variant_name = 5;
+  string image_url = 6;
+  Money unit_price = 7;
+  int64 quantity = 8;
+  Money total_price = 9;
+}
+
+message Cart {
+  string id = 1;
+  string user_id = 2;
+  repeated CartItem items = 3;
+  Money subtotal = 4;
+  Money tax = 5;
+  Money shipping = 6;
+  Money total = 7;
+  int64 item_count = 8;
+}
+
+message AddToCartRequest {
+  string user_id = 1;
+  string product_id = 2;
+  string variant_id = 3;
+  int64 quantity = 4;
+}
+
+message GetCartRequest {
+  string user_id = 1;
+}
+
+message UpdateCartItemRequest {
+  string cart_id = 1;
+  string item_id = 2;
+  int64 quantity = 3;
+}
+
+message RemoveFromCartRequest {
+  string cart_id = 1;
+  string item_id = 2;
+}
+
+message Checkout {
+  string id = 1;
+  string cart_id = 2;
+  string user_id = 3;
+  Address shipping_address = 4;
+  Address billing_address = 5;
+  string payment_intent_id = 6;
+  Money total = 7;
+  string status = 8;
+}
+
+message CreateCheckoutRequest {
+  string cart_id = 1;
+  string user_id = 2;
+  Address shipping_address = 3;
+  Address billing_address = 4;
+}
+
+message Order {
+  string id = 1;
+  string user_id = 2;
+  string merchant_id = 3;
+  string checkout_id = 4;
+  repeated CartItem items = 5;
+  Address shipping_address = 6;
+  Money subtotal = 7;
+  Money tax = 8;
+  Money shipping = 9;
+  Money total = 10;
+  string status = 11;
+  string fulfillment_status = 12;
+  string payment_intent_id = 13;
+  string download_url = 14;
+  google.protobuf.Timestamp created_at = 15;
+  google.protobuf.Timestamp updated_at = 16;
+}
+
+message CreateOrderRequest {
+  string checkout_id = 1;
+  string payment_intent_id = 2;
+}
+
+message GetOrderRequest {
+  string order_id = 1;
+}
+
+message ListOrdersRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string user_id = 3;
+  string merchant_id = 4;
+  string status = 5;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  Pagination pagination = 2;
+}
+
+message UpdateOrderStatusRequest {
+  string order_id = 1;
+  string status = 2;
+  string fulfillment_status = 3;
+}
+
+message FulfillDigitalRequest {
+  string order_id = 1;
+}
+
+message Review {
+  string id = 1;
+  string product_id = 2;
+  string user_id = 3;
+  string username = 4;
+  int32 rating = 5;
+  string title = 6;
+  string content = 7;
+  bool verified_purchase = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message CreateReviewRequest {
+  string product_id = 1;
+  string user_id = 2;
+  int32 rating = 3;
+  string title = 4;
+  string content = 5;
+}
+
+message GetReviewsRequest {
+  string product_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetReviewsResponse {
+  repeated Review reviews = 1;
+  Pagination pagination = 2;
+  double avg_rating = 3;
+  map<int32, int64> rating_distribution = 4;
+}
+
+message MerchantDashboard {
+  string merchant_id = 1;
+  int64 total_products = 2;
+  int64 total_orders = 3;
+  Money total_revenue = 4;
+  Money pending_payout = 5;
+  Money total_paid = 6;
+  repeated DataPoint revenue_history = 7;
+  repeated DataPoint order_history = 8;
+  repeated Order recent_orders = 9;
+}
+
+message GetMerchantDashboardRequest {
+  string merchant_id = 1;
+  DateRange range = 2;
+}

@@ -1,0 +1,220 @@
+# Spark WebSocket Event Protocol
+# Events sent over WebSocket connections.
+
+protocol:
+  version: "1.0"
+  serialization: json
+  compression: none
+
+# =============================================================================
+# Client -> Server Messages
+# =============================================================================
+
+client_messages:
+  - name: ping
+    payload:
+      timestamp: int64
+
+  - name: subscribe
+    description: Subscribe to a channel
+    payload:
+      channel: string
+      stream_id: string
+
+  - name: unsubscribe
+    description: Unsubscribe from a channel
+    payload:
+      channel: string
+      stream_id: string
+
+  - name: chat.send
+    description: Send a chat message
+    payload:
+      stream_id: string
+      content: string
+      emotes: string[]
+
+  - name: chat.delete
+    description: Delete a chat message (moderator)
+    payload:
+      message_id: string
+      stream_id: string
+
+  - name: chat.whisper
+    description: Send a whisper to another user
+    payload:
+      to_user_id: string
+      content: string
+
+  - name: typing.start
+    description: User started typing
+    payload:
+      stream_id: string
+      conversation_id: string
+
+  - name: typing.stop
+    description: User stopped typing
+    payload:
+      stream_id: string
+      conversation_id: string
+
+  - name: stream.react
+    description: React to stream
+    payload:
+      stream_id: string
+      reaction_type: string
+
+  - name: presence.update
+    description: Update presence status
+    payload:
+      status: string
+
+# =============================================================================
+# Server -> Client Messages
+# =============================================================================
+
+server_messages:
+  - name: pong
+    payload:
+      timestamp: int64
+
+  - name: subscribed
+    payload:
+      channel: string
+      stream_id: string
+
+  - name: unsubscribed
+    payload:
+      channel: string
+      stream_id: string
+
+  - name: error
+    payload:
+      code: string
+      message: string
+
+  # Chat events
+  - name: chat.message
+    payload:
+      id: string
+      stream_id: string
+      user_id: string
+      username: string
+      display_name: string
+      avatar_url: string
+      content: string
+      emotes: string[]
+      is_moderator: boolean
+      is_subscriber: boolean
+      is_vip: boolean
+      badge: string
+      created_at: timestamp
+
+  - name: chat.deleted
+    payload:
+      message_id: string
+      stream_id: string
+      moderator_id: string
+
+  - name: chat.whisper
+    payload:
+      from_user_id: string
+      from_username: string
+      content: string
+      created_at: timestamp
+
+  - name: typing
+    payload:
+      user_id: string
+      username: string
+      stream_id: string
+      conversation_id: string
+      is_typing: boolean
+
+  # Stream events
+  - name: stream.started
+    payload:
+      stream_id: string
+      creator_id: string
+      title: string
+      thumbnail_url: string
+
+  - name: stream.ended
+    payload:
+      stream_id: string
+      creator_id: string
+
+  - name: stream.viewer_count
+    payload:
+      stream_id: string
+      viewer_count: int64
+      peak_viewers: int64
+
+  - name: stream.reaction
+    payload:
+      stream_id: string
+      user_id: string
+      username: string
+      reaction_type: string
+
+  # Notification events
+  - name: notification
+    payload:
+      id: string
+      type: string
+      title: string
+      body: string
+      image_url: string
+      action_url: string
+      data: object
+      created_at: timestamp
+
+  - name: notification.unread_count
+    payload:
+      total: int64
+
+  # Presence events
+  - name: presence.online
+    payload:
+      user_id: string
+      username: string
+
+  - name: presence.offline
+    payload:
+      user_id: string
+
+  # Messaging events
+  - name: message.received
+    payload:
+      id: string
+      conversation_id: string
+      sender_id: string
+      sender_username: string
+      content: string
+      created_at: timestamp
+
+  - name: conversation.updated
+    payload:
+      conversation_id: string
+      last_message: object
+      unread_count: int64
+
+  # Stream events (subscriber/gift)
+  - name: stream.subscription
+    payload:
+      user_id: string
+      username: string
+      plan_name: string
+      months: int64
+      created_at: timestamp
+
+  - name: stream.gift
+    payload:
+      from_user_id: string
+      from_username: string
+      to_user_id: string
+      to_username: string
+      gift_item_name: string
+      quantity: int64
+      animation_url: string
+      message: string

@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ printf "%s-config" (include "spark.fullname" .) }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "spark.labels" . | nindent 4 }}
+data:
+  SPARK_ENVIRONMENT: {{ .Values.global.environment | quote }}
+  LOG_LEVEL: "info"
+  POSTGRES_HOST: {{ printf "%s-postgres" (include "spark.fullname" .) | quote }}
+  POSTGRES_PORT: "5432"
+  REDIS_HOST: {{ printf "%s-redis" (include "spark.fullname" .) | quote }}
+  REDIS_PORT: "6379"
+  KAFKA_BROKERS: {{ printf "%s-kafka:9092" (include "spark.fullname" .) | quote }}

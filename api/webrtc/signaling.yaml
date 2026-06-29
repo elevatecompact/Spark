@@ -1,0 +1,108 @@
+# Spark WebRTC Signaling Protocol
+# Used for real-time streaming between broadcaster and media server.
+
+signaling:
+  version: "1.0"
+  transport: websocket
+  endpoint: /ws/webrtc
+
+# =============================================================================
+# Messages
+# =============================================================================
+
+messages:
+  - direction: client->server
+    name: join
+    description: Broadcaster or viewer joins a stream session
+    payload:
+      stream_id: string
+      user_id: string
+      role: string # broadcaster | viewer
+      token: string
+
+  - direction: server->client
+    name: joined
+    description: Confirms successful join
+    payload:
+      session_id: string
+      stream_id: string
+      ice_servers: IceServer[]
+
+  - direction: client->server
+    name: offer
+    description: SDP offer from broadcaster
+    payload:
+      session_id: string
+      sdp: string
+      type: string
+
+  - direction: server->client
+    name: offer
+    description: SDP offer relayed to viewer
+    payload:
+      session_id: string
+      sdp: string
+      type: string
+
+  - direction: client->server
+    name: answer
+    description: SDP answer from viewer
+    payload:
+      session_id: string
+      sdp: string
+      type: string
+
+  - direction: server->client
+    name: answer
+    description: SDP answer relayed to broadcaster
+    payload:
+      session_id: string
+      sdp: string
+      type: string
+
+  - direction: bidirectional
+    name: ice_candidate
+    description: ICE candidate exchange
+    payload:
+      session_id: string
+      candidate: string
+      sdp_mid: string
+      sdp_m_line_index: int32
+
+  - direction: client->server
+    name: leave
+    description: Leave the session
+    payload:
+      session_id: string
+
+  - direction: server->client
+    name: peer_left
+    description: Notifies that a peer has left
+    payload:
+      peer_id: string
+
+  - direction: server->client
+    name: error
+    description: Error message
+    payload:
+      code: string
+      message: string
+
+# =============================================================================
+# Types
+# =============================================================================
+
+types:
+  IceServer:
+    urls: string[]
+    username: string
+    credential: string
+
+  SdpMessage:
+    type: string # offer | answer
+    sdp: string
+
+  IceCandidate:
+    candidate: string
+    sdpMid: string
+    sdpMLineIndex: int32

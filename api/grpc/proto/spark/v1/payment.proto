@@ -1,0 +1,121 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service PaymentService {
+  rpc CreatePaymentIntent(CreatePaymentIntentRequest) returns (PaymentIntent);
+  rpc ConfirmPaymentIntent(ConfirmPaymentIntentRequest) returns (PaymentIntent);
+  rpc CancelPaymentIntent(CancelPaymentIntentRequest) returns (PaymentIntent);
+  rpc GetPaymentIntent(GetPaymentIntentRequest) returns (PaymentIntent);
+  rpc ListPaymentIntents(ListPaymentIntentsRequest) returns (ListPaymentIntentsResponse);
+  rpc AddPaymentMethod(AddPaymentMethodRequest) returns (PaymentMethod);
+  rpc RemovePaymentMethod(RemovePaymentMethodRequest) returns (Empty);
+  rpc ListPaymentMethods(ListPaymentMethodsRequest) returns (ListPaymentMethodsResponse);
+  rpc SetDefaultPaymentMethod(SetDefaultPaymentMethodRequest) returns (Empty);
+  rpc ProcessRefund(ProcessRefundRequest) returns (PaymentIntent);
+  rpc HandleWebhook(HandleWebhookRequest) returns (Empty);
+}
+
+message PaymentIntent {
+  string id = 1;
+  string user_id = 2;
+  Money amount = 3;
+  Money amount_received = 4;
+  Money amount_refunded = 5;
+  string currency = 6;
+  string status = 7;
+  string payment_method_id = 8;
+  string description = 9;
+  map<string, string> metadata = 10;
+  string client_secret = 11;
+  string next_action = 12;
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+}
+
+message PaymentMethod {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;
+  string last_four = 4;
+  string brand = 5;
+  int32 exp_month = 6;
+  int32 exp_year = 7;
+  bool is_default = 8;
+  string billing_email = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+message CreatePaymentIntentRequest {
+  string user_id = 1;
+  Money amount = 2;
+  string payment_method_id = 3;
+  string description = 4;
+  map<string, string> metadata = 5;
+}
+
+message ConfirmPaymentIntentRequest {
+  string payment_intent_id = 1;
+  string payment_method_id = 2;
+}
+
+message CancelPaymentIntentRequest {
+  string payment_intent_id = 1;
+}
+
+message GetPaymentIntentRequest {
+  string payment_intent_id = 1;
+}
+
+message ListPaymentIntentsRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+  string status = 4;
+}
+
+message ListPaymentIntentsResponse {
+  repeated PaymentIntent intents = 1;
+  Pagination pagination = 2;
+}
+
+message AddPaymentMethodRequest {
+  string user_id = 1;
+  string type = 2;
+  string token = 3;
+  bool set_default = 4;
+}
+
+message RemovePaymentMethodRequest {
+  string payment_method_id = 1;
+}
+
+message ListPaymentMethodsRequest {
+  string user_id = 1;
+}
+
+message ListPaymentMethodsResponse {
+  repeated PaymentMethod methods = 1;
+}
+
+message SetDefaultPaymentMethodRequest {
+  string payment_method_id = 1;
+}
+
+message ProcessRefundRequest {
+  string payment_intent_id = 1;
+  Money amount = 2;
+  string reason = 3;
+}
+
+message HandleWebhookRequest {
+  string provider = 1;
+  string event_type = 2;
+  bytes payload = 3;
+  map<string, string> headers = 4;
+}

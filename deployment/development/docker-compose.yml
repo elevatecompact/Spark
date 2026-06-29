@@ -1,0 +1,771 @@
+# ============================================================================
+# Spark - Development Docker Compose
+# ============================================================================
+# Usage:
+#   Start all services:    docker compose -f deployment/development/docker-compose.yml up -d
+#   Start a subset:        docker compose -f deployment/development/docker-compose.yml up -d identity-service postgres redis
+#   Rebuild a service:     docker compose -f deployment/development/docker-compose.yml build identity-service
+#   Follow logs:           docker compose -f deployment/development/docker-compose.yml logs -f
+# ============================================================================
+
+services:
+  # ===========================================================================
+  # Infrastructure
+  # ===========================================================================
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: spark
+      POSTGRES_USER: spark
+      POSTGRES_PASSWORD: spark_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spark"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092,PLAINTEXT_INTERNAL://kafka:29092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,PLAINTEXT_INTERNAL://0.0.0.0:29092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+
+  opensearch:
+    image: opensearchproject/opensearch:2.12.0
+    environment:
+      discovery.type: single-node
+      DISABLE_SECURITY_PLUGIN: true
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+
+  # ===========================================================================
+  # Go Microservices (25)
+  # ===========================================================================
+  # All Go services use the root multi-stage Dockerfile with SERVICE build arg.
+  # They share postgres, redis, kafka infrastructure.
+  # ===========================================================================
+
+  identity-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/identity-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      SPARK_ENVIRONMENT: development
+      SERVER_PORT: "8080"
+      GRPC_PORT: "9090"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:29092
+      JWT_SECRET: spark-dev-jwt-secret-do-not-use-in-production
+      JWT_EXPIRY: 24h
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      LOG_LEVEL: debug
+    ports:
+      - "8080:8080"
+      - "9090:9090"
+
+  creator-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/creator-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      CREATOR_SERVER_PORT: "8083"
+      CREATOR_DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_creator?sslmode=disable
+      CREATOR_REDIS_URL: redis://redis:6379/0
+      CREATOR_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8083:8083"
+
+  stream-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/stream-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      SPARK_SERVER_PORT: "8081"
+      SPARK_DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_stream?sslmode=disable
+      SPARK_REDIS_URL: redis://redis:6379/0
+      SPARK_KAFKA_BROKERS: kafka:29092
+      SPARK_RTMP_LISTEN_ADDR: 0.0.0.0:1935
+      SPARK_JWT_SECRET: spark-dev-jwt-secret-do-not-use-in-production
+      LOG_LEVEL: debug
+    ports:
+      - "8081:8081"
+      - "1935:1935"
+
+  viewer-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/viewer-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      SERVER_PORT: "4003"
+      GRPC_PORT: "9103"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_viewer?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      JWT_SECRET: spark-dev-jwt-secret-do-not-use-in-production
+      LOG_LEVEL: debug
+    ports:
+      - "4003:4003"
+      - "9103:9103"
+
+  chat-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/chat-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      SERVER_PORT: "4005"
+      GRPC_PORT: "9105"
+      WS_PORT: "4006"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_chat?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:29092
+      JWT_SECRET: spark-dev-jwt-secret-do-not-use-in-production
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      LOG_LEVEL: debug
+    ports:
+      - "4005:4005"
+      - "9105:9105"
+      - "4006:4006"
+
+  wallet-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/wallet-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      WALLET_PORT: "4009"
+      WALLET_DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_wallet?sslmode=disable
+      WALLET_REDIS_URL: redis://redis:6379/0
+      WALLET_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4009:4009"
+
+  messaging-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/messaging-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      MSG_PORT: "4007"
+      MSG_WS_PORT: "4008"
+      MSG_DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_messaging?sslmode=disable
+      MSG_REDIS_URL: redis://redis:6379/0
+      MSG_KAFKA_BROKERS: kafka:29092
+      ALLOWED_ORIGINS: http://localhost:3000,http://localhost:5173
+      LOG_LEVEL: debug
+    ports:
+      - "4007:4007"
+      - "4008:4008"
+
+  subscription-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/subscription-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "4010"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_subscription?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4010:4010"
+
+  gift-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/gift-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      GIFT_PORT: "4011"
+      GIFT_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_gift?sslmode=disable
+      GIFT_REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4011:4011"
+
+  payment-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/payment-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PAYMENT_PORT: "4012"
+      PAYMENT_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_payment?sslmode=disable
+      PAYMENT_REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4012:4012"
+
+  analytics-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/analytics-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      clickhouse:
+        condition: service_started
+    environment:
+      ANALYTICS_PORT: "4013"
+      ANALYTICS_POSTGRES_URL: postgres://spark:spark_dev@postgres:5432/spark_analytics?sslmode=disable
+      ANALYTICS_REDIS_URL: redis://redis:6379/0
+      ANALYTICS_CLICKHOUSE_URL: http://clickhouse:8123
+      ANALYTICS_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4013:4013"
+
+  notification-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/notification-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      NOTIFICATION_PORT: "4014"
+      NOTIFICATION_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_notification?sslmode=disable
+      NOTIFICATION_REDIS_URL: redis://redis:6379/0
+      NOTIFICATION_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4014:4014"
+
+  recommendation-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/recommendation-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "8087"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_recommendation?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8087:8087"
+
+  search-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/search-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      opensearch:
+        condition: service_started
+    environment:
+      PORT: "8088"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_search?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8088:8088"
+
+  translation-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/translation-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "8089"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_translation?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8089:8089"
+
+  moderation-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/moderation-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "8090"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_moderation?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8090:8090"
+
+  community-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/community-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "8091"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_community?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8091:8091"
+
+  event-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/event-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "8092"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_event?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8092:8092"
+
+  competition-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/competition-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "8093"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_competition?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8093:8093"
+
+  advertising-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/advertising-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      PORT: "8094"
+      DATABASE_URL: postgres://spark:spark_dev@postgres:5432/spark_advertising?sslmode=disable
+      KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "8094:8094"
+
+  commerce-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/commerce-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      COMMERCE_PORT: "4023"
+      COMMERCE_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_commerce?sslmode=disable
+      COMMERCE_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4023:4023"
+
+  media-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/media-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      MEDIA_PORT: "4024"
+      MEDIA_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_media?sslmode=disable
+      MEDIA_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4024:4024"
+
+  licensing-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/licensing-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      LICENSING_PORT: "4025"
+      LICENSING_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_licensing?sslmode=disable
+      LICENSING_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4025:4025"
+
+  discovery-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/discovery-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      DISCOVERY_PORT: "4026"
+      DISCOVERY_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_discovery?sslmode=disable
+      DISCOVERY_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4026:4026"
+
+  trust-service:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      args:
+        SERVICE: services/trust-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    environment:
+      TRUST_PORT: "4027"
+      TRUST_DB_URL: postgres://spark:spark_dev@postgres:5432/spark_trust?sslmode=disable
+      TRUST_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: debug
+    ports:
+      - "4027:4027"
+
+  # ===========================================================================
+  # Python AI Services (11)
+  # ===========================================================================
+  # All Python services use the shared Dockerfile.python with SERVICE build arg.
+  # ===========================================================================
+
+  ranking-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: ranking-ai
+    environment:
+      RANKING_PORT: "8100"
+      RANKING_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8100:8100"
+
+  fraud-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: fraud-ai
+    environment:
+      FRAUD_PORT: "8101"
+      FRAUD_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8101:8101"
+
+  moderation-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: moderation-ai
+    environment:
+      MODERATION_PORT: "8102"
+      MODERATION_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8102:8102"
+
+  translation-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: translation-ai
+    environment:
+      TRANSLATION_PORT: "8103"
+      TRANSLATION_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8103:8103"
+
+  voice-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: voice-ai
+    environment:
+      VOICE_PORT: "8104"
+      VOICE_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8104:8104"
+
+  vision-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: vision-ai
+    environment:
+      VISION_PORT: "8105"
+      VISION_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8105:8105"
+
+  clip-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: clip-ai
+    environment:
+      CLIP_PORT: "8106"
+      CLIP_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8106:8106"
+
+  thumbnail-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: thumbnail-ai
+    environment:
+      THUMBNAIL_PORT: "8107"
+      THUMBNAIL_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8107:8107"
+
+  assistant-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: assistant-ai
+    environment:
+      ASSISTANT_PORT: "8108"
+      ASSISTANT_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8108:8108"
+
+  recommendation-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: recommendation-ai
+    environment:
+      RECOMMENDATION_PORT: "8109"
+      RECOMMENDATION_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8109:8109"
+
+  creator-ai:
+    build:
+      context: ../..
+      dockerfile: deployment/development/Dockerfile.python
+      args:
+        SERVICE: creator-ai
+    environment:
+      CREATOR_PORT: "8110"
+      CREATOR_KAFKA_BROKERS: kafka:29092
+      LOG_LEVEL: INFO
+    ports:
+      - "8110:8110"
+
+volumes:
+  postgres_data:
+  redis_data:
+  clickhouse_data:

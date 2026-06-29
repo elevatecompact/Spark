@@ -1,0 +1,204 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service LicensingService {
+  rpc CreateLicense(CreateLicenseRequest) returns (License);
+  rpc GetLicense(GetLicenseRequest) returns (License);
+  rpc UpdateLicense(UpdateLicenseRequest) returns (License);
+  rpc ListLicenses(ListLicensesRequest) returns (ListLicensesResponse);
+  rpc TerminateLicense(TerminateLicenseRequest) returns (License);
+  rpc RegisterContent(RegisterContentRequest) returns (ContentRegistration);
+  rpc GetContentRegistration(GetContentRegistrationRequest) returns (ContentRegistration);
+  rpc GetRoyaltyStatement(GetRoyaltyStatementRequest) returns (RoyaltyStatement);
+  rpc RecordUsage(RecordUsageRequest) returns (UsageRecord);
+  rpc GetUsageReport(GetUsageReportRequest) returns (GetUsageReportResponse);
+  rpc GetComplianceReport(GetComplianceReportRequest) returns (ComplianceReport);
+}
+
+message License {
+  string id = 1;
+  string licensor_id = 2;
+  string licensee_id = 3;
+  string content_id = 4;
+  string type = 5;
+  string status = 6;
+  string territory = 7;
+  string exclusivity = 8;
+  string duration = 9;
+  google.protobuf.Timestamp starts_at = 10;
+  google.protobuf.Timestamp ends_at = 11;
+  Money fee = 12;
+  string revenue_share_pct = 13;
+  Money minimum_guarantee = 14;
+  repeated string restrictions = 15;
+  repeated string approved_territories = 16;
+  repeated string approved_platforms = 17;
+  google.protobuf.Timestamp created_at = 18;
+  google.protobuf.Timestamp updated_at = 19;
+}
+
+message CreateLicenseRequest {
+  string licensor_id = 1;
+  string licensee_id = 2;
+  string content_id = 3;
+  string type = 4;
+  string territory = 5;
+  string exclusivity = 6;
+  string duration = 7;
+  google.protobuf.Timestamp starts_at = 8;
+  google.protobuf.Timestamp ends_at = 9;
+  Money fee = 10;
+  string revenue_share_pct = 11;
+  Money minimum_guarantee = 12;
+  repeated string restrictions = 13;
+  repeated string approved_territories = 14;
+  repeated string approved_platforms = 15;
+}
+
+message GetLicenseRequest {
+  string license_id = 1;
+}
+
+message UpdateLicenseRequest {
+  string license_id = 1;
+  string status = 2;
+  string territory = 3;
+  repeated string restrictions = 4;
+  repeated string approved_territories = 5;
+  repeated string approved_platforms = 6;
+}
+
+message ListLicensesRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string licensor_id = 3;
+  string licensee_id = 4;
+  string content_id = 5;
+  string status = 6;
+  string type = 7;
+}
+
+message ListLicensesResponse {
+  repeated License licenses = 1;
+  Pagination pagination = 2;
+}
+
+message TerminateLicenseRequest {
+  string license_id = 1;
+  string reason = 2;
+}
+
+message ContentRegistration {
+  string id = 1;
+  string owner_id = 2;
+  string title = 3;
+  string isrc = 4;
+  string upc = 5;
+  repeated string writers = 6;
+  repeated string publishers = 7;
+  repeated string performers = 8;
+  double ownership_pct = 9;
+  string copyright_registration = 10;
+  google.protobuf.Timestamp registered_at = 11;
+}
+
+message RegisterContentRequest {
+  string owner_id = 1;
+  string title = 2;
+  string isrc = 3;
+  string upc = 4;
+  repeated string writers = 5;
+  repeated string publishers = 6;
+  repeated string performers = 7;
+  double ownership_pct = 8;
+  string copyright_registration = 9;
+}
+
+message GetContentRegistrationRequest {
+  string content_id = 1;
+}
+
+message RoyaltyStatement {
+  string id = 1;
+  string license_id = 2;
+  string content_id = 3;
+  string period = 4;
+  Money total_revenue = 5;
+  Money royalty_amount = 6;
+  Money minimum_guarantee = 7;
+  Money amount_due = 8;
+  string status = 9;
+  google.protobuf.Timestamp generated_at = 10;
+  google.protobuf.Timestamp paid_at = 11;
+}
+
+message GetRoyaltyStatementRequest {
+  string license_id = 1;
+  string period = 2;
+}
+
+message UsageRecord {
+  string id = 1;
+  string license_id = 2;
+  string content_id = 3;
+  string platform = 4;
+  string territory = 5;
+  int64 streams = 6;
+  int64 downloads = 7;
+  int64 impressions = 8;
+  int64 clicks = 9;
+  Money revenue_generated = 10;
+  google.protobuf.Timestamp recorded_at = 11;
+}
+
+message RecordUsageRequest {
+  string license_id = 1;
+  string content_id = 2;
+  string platform = 3;
+  string territory = 4;
+  int64 streams = 5;
+  int64 downloads = 6;
+  int64 impressions = 7;
+  int64 clicks = 8;
+  Money revenue_generated = 9;
+}
+
+message GetUsageReportRequest {
+  string license_id = 1;
+  DateRange range = 2;
+  string granularity = 3;
+}
+
+message UsageSummary {
+  int64 total_streams = 1;
+  int64 total_downloads = 2;
+  int64 total_impressions = 3;
+  int64 total_clicks = 4;
+  Money total_revenue = 5;
+  repeated DataPoint history = 6;
+}
+
+message GetUsageReportResponse {
+  UsageSummary summary = 1;
+  repeated UsageRecord records = 2;
+}
+
+message ComplianceReport {
+  string license_id = 1;
+  bool is_compliant = 2;
+  repeated string violations = 3;
+  int64 approved_usages = 4;
+  int64 unapproved_usages = 5;
+  google.protobuf.Timestamp generated_at = 6;
+}
+
+message GetComplianceReportRequest {
+  string license_id = 1;
+  DateRange range = 2;
+}

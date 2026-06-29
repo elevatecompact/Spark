@@ -1,0 +1,116 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service TranslationService {
+  rpc Translate(TranslateRequest) returns (TranslateResponse);
+  rpc DetectLanguage(DetectLanguageRequest) returns (DetectLanguageResponse);
+  rpc GetSupportedLanguages(GetSupportedLanguagesRequest) returns (GetSupportedLanguagesResponse);
+  rpc GetTranslationMemory(GetTranslationMemoryRequest) returns (GetTranslationMemoryResponse);
+  rpc SubmitReview(SubmitReviewRequest) returns (Empty);
+  rpc GetReviewQueue(GetReviewQueueRequest) returns (GetReviewQueueResponse);
+}
+
+message TranslateRequest {
+  string text = 1;
+  string source_language = 2;
+  string target_language = 3;
+  string context = 4;
+  bool use_memory = 5;
+}
+
+message TranslateResponse {
+  string translated_text = 1;
+  string detected_language = 2;
+  float confidence = 3;
+  bool from_memory = 4;
+  string translation_id = 5;
+}
+
+message DetectLanguageRequest {
+  string text = 1;
+}
+
+message DetectLanguageResponse {
+  string language = 1;
+  float confidence = 2;
+  repeated LanguageAlternative alternatives = 3;
+}
+
+message LanguageAlternative {
+  string language = 1;
+  float confidence = 2;
+}
+
+message LanguageInfo {
+  string code = 1;
+  string name = 2;
+  string native_name = 3;
+  bool is_rtl = 4;
+}
+
+message GetSupportedLanguagesRequest {}
+message GetSupportedLanguagesResponse {
+  repeated LanguageInfo languages = 1;
+}
+
+message TranslationMemory {
+  string id = 1;
+  string source_text_hash = 2;
+  string source_text = 3;
+  string translated_text = 4;
+  string source_language = 5;
+  string target_language = 6;
+  string provider = 7;
+  int64 usage_count = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+}
+
+message GetTranslationMemoryRequest {
+  string source_text = 1;
+  string source_language = 2;
+  string target_language = 3;
+}
+
+message GetTranslationMemoryResponse {
+  TranslationMemory entry = 1;
+  bool found = 2;
+}
+
+message ReviewItem {
+  string id = 1;
+  string translation_id = 2;
+  string source_text = 3;
+  string translated_text = 4;
+  string suggested_text = 5;
+  string source_language = 6;
+  string target_language = 7;
+  string status = 8;
+  string reviewer_id = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+message SubmitReviewRequest {
+  string review_id = 1;
+  string reviewer_id = 2;
+  string action = 3;
+  string corrected_text = 4;
+  string comment = 5;
+}
+
+message GetReviewQueueRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string language = 3;
+}
+
+message GetReviewQueueResponse {
+  repeated ReviewItem items = 1;
+  Pagination pagination = 2;
+}

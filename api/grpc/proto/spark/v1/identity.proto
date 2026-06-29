@@ -1,0 +1,149 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service IdentityService {
+  rpc Register(RegisterRequest) returns (RegisterResponse);
+  rpc Login(LoginRequest) returns (LoginResponse);
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+  rpc Logout(LogoutRequest) returns (Empty);
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc UpdateUser(UpdateUserRequest) returns (User);
+  rpc DeleteUser(DeleteUserRequest) returns (Empty);
+  rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
+  rpc VerifyEmail(VerifyEmailRequest) returns (Empty);
+  rpc ForgotPassword(ForgotPasswordRequest) returns (Empty);
+  rpc ResetPassword(ResetPasswordRequest) returns (Empty);
+  rpc ChangePassword(ChangePasswordRequest) returns (Empty);
+  rpc GetSessions(GetSessionsRequest) returns (GetSessionsResponse);
+  rpc RevokeSession(RevokeSessionRequest) returns (Empty);
+}
+
+message User {
+  string id = 1;
+  string email = 2;
+  string username = 3;
+  string display_name = 4;
+  string avatar_url = 5;
+  string banner_url = 6;
+  string bio = 7;
+  bool is_creator = 8;
+  bool is_verified = 9;
+  bool email_verified = 10;
+  repeated string roles = 11;
+  google.protobuf.Timestamp created_at = 12;
+  google.protobuf.Timestamp updated_at = 13;
+}
+
+message RegisterRequest {
+  string email = 1;
+  string username = 2;
+  string password = 3;
+  string display_name = 4;
+}
+
+message RegisterResponse {
+  User user = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  int64 expires_in = 4;
+}
+
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+message LoginResponse {
+  User user = 1;
+  string access_token = 2;
+  string refresh_token = 3;
+  int64 expires_in = 4;
+}
+
+message RefreshTokenRequest {
+  string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+  string access_token = 1;
+  string refresh_token = 2;
+  int64 expires_in = 3;
+}
+
+message LogoutRequest {
+  string refresh_token = 1;
+}
+
+message GetUserRequest {
+  string user_id = 1;
+}
+
+message UpdateUserRequest {
+  string user_id = 1;
+  string display_name = 2;
+  string bio = 3;
+  string avatar_url = 4;
+  string banner_url = 5;
+}
+
+message DeleteUserRequest {
+  string user_id = 1;
+}
+
+message ListUsersRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string search = 3;
+  repeated string roles = 4;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  Pagination pagination = 2;
+}
+
+message VerifyEmailRequest {
+  string token = 1;
+}
+
+message ForgotPasswordRequest {
+  string email = 1;
+}
+
+message ResetPasswordRequest {
+  string token = 1;
+  string new_password = 2;
+}
+
+message ChangePasswordRequest {
+  string user_id = 1;
+  string current_password = 2;
+  string new_password = 3;
+}
+
+message Session {
+  string id = 1;
+  string user_id = 2;
+  string ip_address = 3;
+  string user_agent = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp expires_at = 6;
+}
+
+message GetSessionsRequest {
+  string user_id = 1;
+}
+
+message GetSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message RevokeSessionRequest {
+  string session_id = 1;
+}

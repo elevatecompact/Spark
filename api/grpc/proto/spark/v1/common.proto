@@ -1,0 +1,75 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+message Empty {}
+
+message Pagination {
+  int32 page = 1;
+  int32 page_size = 2;
+  int32 total = 3;
+}
+
+message Sort {
+  string field = 1;
+  SortOrder order = 2;
+}
+
+enum SortOrder {
+  SORT_ORDER_UNSPECIFIED = 0;
+  SORT_ORDER_ASC = 1;
+  SORT_ORDER_DESC = 2;
+}
+
+message DateRange {
+  google.protobuf.Timestamp start = 1;
+  google.protobuf.Timestamp end = 2;
+}
+
+message Money {
+  string currency = 1;
+  int64 amount = 2;
+}
+
+message Image {
+  string url = 1;
+  int32 width = 2;
+  int32 height = 3;
+  string alt = 4;
+}
+
+message Video {
+  string url = 1;
+  string mime_type = 2;
+  int32 duration_seconds = 3;
+  repeated Image thumbnails = 4;
+}
+
+message Address {
+  string street = 1;
+  string city = 2;
+  string state = 3;
+  string postal_code = 4;
+  string country = 5;
+}
+
+message Metadata {
+  map<string, string> entries = 1;
+}
+
+message ErrorDetail {
+  string field = 1;
+  string message = 2;
+  string code = 3;
+}
+
+message ErrorResponse {
+  string message = 1;
+  string code = 2;
+  repeated ErrorDetail details = 3;
+}

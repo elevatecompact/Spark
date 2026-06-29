@@ -1,0 +1,192 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service AnalyticsService {
+  rpc TrackEvent(TrackEventRequest) returns (Empty);
+  rpc GetStreamAnalytics(GetStreamAnalyticsRequest) returns (StreamAnalytics);
+  rpc GetCreatorAnalytics(GetCreatorAnalyticsRequest) returns (CreatorAnalytics);
+  rpc GetRevenueAnalytics(GetRevenueAnalyticsRequest) returns (RevenueAnalytics);
+  rpc GetAudienceInsights(GetAudienceInsightsRequest) returns (AudienceInsights);
+  rpc GetMetric(GetMetricRequest) returns (MetricData);
+  rpc ListMetrics(ListMetricsRequest) returns (ListMetricsResponse);
+  rpc CreateDashboard(CreateDashboardRequest) returns (Dashboard);
+  rpc GetDashboards(GetDashboardsRequest) returns (GetDashboardsResponse);
+  rpc GetReport(GetReportRequest) returns (Report);
+  rpc GenerateReport(GenerateReportRequest) returns (Report);
+}
+
+message AnalyticsEvent {
+  string id = 1;
+  string name = 2;
+  string user_id = 3;
+  string stream_id = 4;
+  string session_id = 5;
+  map<string, string> properties = 6;
+  map<string, double> metrics = 7;
+  string ip_address = 8;
+  string user_agent = 9;
+  google.protobuf.Timestamp timestamp = 10;
+}
+
+message TrackEventRequest {
+  AnalyticsEvent event = 1;
+}
+
+message StreamAnalytics {
+  string stream_id = 1;
+  int64 total_viewers = 2;
+  int64 peak_viewers = 3;
+  int64 avg_viewers = 4;
+  int64 total_chat_messages = 5;
+  int64 total_new_followers = 6;
+  int64 total_subscriptions = 7;
+  int64 total_gifts = 8;
+  Money total_earnings = 9;
+  double avg_watch_time = 10;
+  google.protobuf.Timestamp started_at = 11;
+  google.protobuf.Timestamp ended_at = 12;
+}
+
+message GetStreamAnalyticsRequest {
+  string stream_id = 1;
+}
+
+message CreatorAnalytics {
+  string creator_id = 1;
+  int64 total_streams = 2;
+  int64 total_viewers = 3;
+  int64 total_hours_streamed = 4;
+  int64 total_followers = 5;
+  int64 total_subscribers = 6;
+  int64 total_earnings = 7;
+  double avg_viewers = 8;
+  double avg_watch_time = 9;
+  repeated int64 viewer_growth = 10;
+  repeated int64 earning_history = 11;
+}
+
+message GetCreatorAnalyticsRequest {
+  string creator_id = 1;
+  DateRange range = 2;
+}
+
+message RevenueAnalytics {
+  Money total_revenue = 1;
+  Money subscription_revenue = 2;
+  Money gift_revenue = 3;
+  Money ad_revenue = 4;
+  Money tips_revenue = 5;
+  repeated int64 daily_revenue = 6;
+  repeated int64 monthly_revenue = 7;
+}
+
+message GetRevenueAnalyticsRequest {
+  string creator_id = 1;
+  DateRange range = 2;
+}
+
+message AudienceInsights {
+  map<string, int64> age_distribution = 1;
+  map<string, int64> gender_distribution = 2;
+  map<string, int64> country_distribution = 3;
+  map<string, int64> device_distribution = 4;
+  map<string, int64> language_distribution = 5;
+  double returning_viewer_pct = 6;
+  double avg_session_duration = 7;
+}
+
+message GetAudienceInsightsRequest {
+  string creator_id = 1;
+  DateRange range = 2;
+}
+
+message MetricData {
+  string name = 1;
+  repeated DataPoint points = 2;
+  string unit = 3;
+}
+
+message DataPoint {
+  google.protobuf.Timestamp timestamp = 1;
+  double value = 2;
+}
+
+message GetMetricRequest {
+  string name = 1;
+  string creator_id = 2;
+  DateRange range = 3;
+  string granularity = 4;
+}
+
+message Metric {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string unit = 4;
+  string aggregation = 5;
+}
+
+message ListMetricsRequest {}
+message ListMetricsResponse {
+  repeated Metric metrics = 1;
+}
+
+message Dashboard {
+  string id = 1;
+  string creator_id = 2;
+  string name = 3;
+  repeated DashboardWidget widgets = 4;
+  bool is_default = 5;
+  google.protobuf.Timestamp created_at = 6;
+}
+
+message DashboardWidget {
+  string id = 1;
+  string metric_name = 2;
+  string visualization = 3;
+  int32 x = 4;
+  int32 y = 5;
+  int32 width = 6;
+  int32 height = 7;
+}
+
+message CreateDashboardRequest {
+  string creator_id = 1;
+  string name = 2;
+  repeated DashboardWidget widgets = 3;
+}
+
+message GetDashboardsRequest {
+  string creator_id = 1;
+}
+
+message GetDashboardsResponse {
+  repeated Dashboard dashboards = 1;
+}
+
+message Report {
+  string id = 1;
+  string creator_id = 2;
+  string type = 3;
+  string status = 4;
+  string download_url = 5;
+  DateRange range = 6;
+  google.protobuf.Timestamp requested_at = 7;
+  google.protobuf.Timestamp completed_at = 8;
+}
+
+message GetReportRequest {
+  string report_id = 1;
+}
+
+message GenerateReportRequest {
+  string creator_id = 1;
+  string type = 2;
+  DateRange range = 3;
+}

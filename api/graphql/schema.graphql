@@ -1,0 +1,661 @@
+# Spark GraphQL Schema
+# Provides a unified GraphQL API for frontend consumption.
+
+type Query {
+  # Identity
+  me: User
+  user(id: ID!): User
+  users(search: String, page: Int, pageSize: Int): UserConnection!
+
+  # Stream
+  stream(id: ID!): Stream
+  streams(
+    creatorId: ID
+    category: String
+    isLive: Boolean
+    search: String
+    page: Int
+    pageSize: Int
+  ): StreamConnection!
+
+  # Creator
+  creator(id: ID!): Creator
+  creatorStats(creatorId: ID!, range: DateRangeInput): CreatorStats
+
+  # Viewer
+  followers(creatorId: ID!, page: Int, pageSize: Int): FollowerConnection!
+  following(userId: ID!, page: Int, pageSize: Int): FollowingConnection!
+  viewerHistory(userId: ID!, page: Int, pageSize: Int): ViewerHistoryConnection!
+
+  # Wallet
+  balance(userId: ID!): Balance!
+  transactions(
+    userId: ID!
+    type: String
+    status: String
+    page: Int
+    pageSize: Int
+  ): TransactionConnection!
+
+  # Messaging
+  conversations(userId: ID!, page: Int, pageSize: Int): ConversationConnection!
+  conversation(id: ID!, page: Int, pageSize: Int): ConversationDetail!
+
+  # Subscription
+  subscriptions(userId: ID!, page: Int, pageSize: Int): SubscriptionConnection!
+  subscribers(creatorId: ID!, page: Int, pageSize: Int): SubscriberConnection!
+  plans(creatorId: ID!): [Plan!]!
+  invoices(userId: ID!, page: Int, pageSize: Int): InvoiceConnection!
+
+  # Gift
+  giftItems(category: String): [GiftItem!]!
+  giftCards(userId: ID!, page: Int, pageSize: Int): GiftCardConnection!
+
+  # Payment
+  paymentMethods(userId: ID!): [PaymentMethod!]!
+
+  # Notification
+  notifications(
+    userId: ID!
+    unreadOnly: Boolean
+    type: String
+    page: Int
+    pageSize: Int
+  ): NotificationConnection!
+  notificationPreferences(userId: ID!): NotificationPreferences!
+  unreadCount(userId: ID!): Int!
+
+  # Recommendation
+  feed(userId: ID!, feedType: String, page: Int, pageSize: Int): FeedConnection!
+  trending(category: String, limit: Int, timeRange: String): [FeedItem!]!
+  upNext(streamId: ID!, limit: Int): [FeedItem!]!
+  similarContent(streamId: ID!, limit: Int): [FeedItem!]!
+  creatorRecommendations(userId: ID!, limit: Int): [ID!]!
+
+  # Search
+  search(
+    query: String!
+    type: String
+    category: String
+    page: Int
+    pageSize: Int
+  ): SearchResultConnection!
+  autocomplete(prefix: String!, type: String, limit: Int): AutocompleteResult!
+
+  # Translation
+  supportedLanguages: [LanguageInfo!]!
+
+  # Moderation
+  reports(page: Int, pageSize: Int, status: String): ReportConnection!
+  moderationStats: ModerationStats!
+  rules: [ModerationRule!]!
+
+  # Community
+  community(id: ID!): Community!
+  communities(
+    search: String
+    category: String
+    page: Int
+    pageSize: Int
+  ): CommunityConnection!
+  members(communityId: ID!, role: String, page: Int, pageSize: Int): MemberConnection!
+  post(id: ID!): Post!
+  posts(communityId: ID!, page: Int, pageSize: Int): PostConnection!
+  comments(postId: ID!, page: Int, pageSize: Int): CommentConnection!
+
+  # Event
+  event(id: ID!): Event!
+  events(
+    creatorId: ID
+    category: String
+    status: String
+    type: String
+    page: Int
+    pageSize: Int
+  ): EventConnection!
+  attendees(eventId: ID!, page: Int, pageSize: Int): AttendeeConnection!
+  sessions(eventId: ID!): [Session!]!
+  series(creatorId: ID!, page: Int, pageSize: Int): SeriesConnection!
+
+  # Competition
+  competition(id: ID!): Competition!
+  competitions(
+    creatorId: ID
+    type: String
+    status: String
+    page: Int
+    pageSize: Int
+  ): CompetitionConnection!
+  participants(competitionId: ID!, page: Int, pageSize: Int): ParticipantConnection!
+  leaderboard(competitionId: ID!, limit: Int, offset: Int): Leaderboard!
+
+  # Advertising
+  campaign(id: ID!): Campaign!
+  campaigns(advertiserId: ID!, page: Int, pageSize: Int): CampaignConnection!
+  adUnits(campaignId: ID!): [AdUnit!]!
+  campaignPerformance(campaignId: ID!, range: DateRangeInput): CampaignPerformance!
+
+  # Commerce
+  product(id: ID!): Product!
+  products(
+    merchantId: ID
+    category: String
+    page: Int
+    pageSize: Int
+  ): ProductConnection!
+  cart(userId: ID!): Cart!
+  order(id: ID!): Order!
+  orders(userId: ID, merchantId: ID, page: Int, pageSize: Int): OrderConnection!
+  reviews(productId: ID!, page: Int, pageSize: Int): ReviewConnection!
+  merchantDashboard(merchantId: ID!, range: DateRangeInput): MerchantDashboard!
+
+  # Media
+  media(id: ID!): MediaAsset!
+  uploadStatus(uploadId: ID!): UploadSession!
+  storageUsage(userId: ID!): StorageUsage!
+  transcodeStatus(mediaId: ID!): TranscodeStatus!
+  thumbnails(mediaId: ID!): [Thumbnail!]!
+
+  # Licensing
+  license(id: ID!): License!
+  licenses(
+    page: Int
+    pageSize: Int
+    status: String
+    type: String
+  ): LicenseConnection!
+  contentRegistration(contentId: ID!): ContentRegistration!
+  royaltyStatement(licenseId: ID!, period: String!): RoyaltyStatement!
+  usageReport(licenseId: ID!, range: DateRangeInput): UsageReport!
+
+  # Discovery
+  personalizedFeed(userId: ID!, page: Int, pageSize: Int): FeedConnection!
+  categoryFeed(category: String!, page: Int, pageSize: Int): FeedConnection!
+  newFeed(page: Int, pageSize: Int): FeedConnection!
+  categories: [Category!]!
+  collections(page: Int, pageSize: Int): CollectionConnection!
+  collection(id: ID!): Collection!
+  trendingCreators(limit: Int, category: String): [TrendingCreator!]!
+  staffPicks(limit: Int): [StaffPick!]!
+
+  # Trust
+  reputation(userId: ID!): Reputation!
+  fraudCases(page: Int, pageSize: Int, status: String): FraudCaseConnection!
+  trustMetrics(range: DateRangeInput): TrustMetrics!
+}
+
+type Mutation {
+  # Identity
+  register(email: String!, username: String!, password: String!): AuthPayload!
+  login(email: String!, password: String!): AuthPayload!
+  refreshToken(refreshToken: String!): TokenPayload!
+  logout: Boolean!
+  updateUser(input: UpdateUserInput!): User!
+  verifyEmail(token: String!): Boolean!
+  forgotPassword(email: String!): Boolean!
+  resetPassword(token: String!, newPassword: String!): Boolean!
+  changePassword(currentPassword: String!, newPassword: String!): Boolean!
+
+  # Creator
+  updateCreator(input: UpdateCreatorInput!): Creator!
+
+  # Stream
+  createStream(input: CreateStreamInput!): Stream!
+  updateStream(id: ID!, input: UpdateStreamInput!): Stream!
+  deleteStream(id: ID!): Boolean!
+  startStream(streamId: ID!): Stream!
+  endStream(streamId: ID!): Stream!
+  regenerateStreamKey(streamId: ID!): StreamKey!
+
+  # Viewer
+  follow(creatorId: ID!): FollowPayload!
+  unfollow(creatorId: ID!): Boolean!
+  recordView(streamId: ID!, watchDuration: Int!): Boolean!
+
+  # Wallet
+  deposit(amount: MoneyInput!, paymentMethodId: ID!): Transaction!
+  withdraw(amount: MoneyInput!, payoutMethodId: ID!): Transaction!
+
+  # Messaging
+  sendMessage(receiverId: ID!, content: String!): DirectMessage!
+  markConversationRead(conversationId: ID!): Boolean!
+
+  # Subscription
+  subscribe(planId: ID!, paymentMethodId: ID!): Subscription!
+  cancelSubscription(id: ID!, cancelAtPeriodEnd: Boolean!): Subscription!
+  createPlan(input: CreatePlanInput!): Plan!
+  updatePlan(id: ID!, input: UpdatePlanInput!): Plan!
+
+  # Gift
+  sendGift(input: SendGiftInput!): GiftTransaction!
+  purchaseGiftItem(giftItemId: ID!, quantity: Int!): GiftTransaction!
+  redeemGiftCard(code: String!): GiftTransaction!
+
+  # Payment
+  createPaymentIntent(input: PaymentIntentInput!): PaymentIntent!
+  confirmPaymentIntent(paymentIntentId: ID!): PaymentIntent!
+  addPaymentMethod(type: String!, token: String!): PaymentMethod!
+  removePaymentMethod(id: ID!): Boolean!
+  processRefund(paymentIntentId: ID!, amount: MoneyInput): PaymentIntent!
+
+  # Notification
+  markNotificationRead(id: ID!): Boolean!
+  markAllNotificationsRead: Boolean!
+  updateNotificationPreferences(input: NotificationPreferencesInput!): NotificationPreferences!
+  registerDevice(input: DeviceInput!): Device!
+  unregisterDevice(deviceId: ID!): Boolean!
+
+  # Recommendation
+  recordInteraction(input: InteractionInput!): Boolean!
+
+  # Translation
+  translate(text: String!, sourceLanguage: String, targetLanguage: String!): TranslationPayload!
+  submitReview(reviewId: ID!, action: String!, correctedText: String): Boolean!
+
+  # Moderation
+  scanText(content: String!, context: String): ScanResult!
+  scanImage(imageUrl: String!, context: String): ScanResult!
+  reviewReport(reportId: ID!, action: String!, notes: String): ContentReport!
+  takeAction(input: ActionInput!): ModerationAction!
+
+  # Community
+  createCommunity(input: CreateCommunityInput!): Community!
+  updateCommunity(id: ID!, input: UpdateCommunityInput!): Community!
+  deleteCommunity(id: ID!): Boolean!
+  joinCommunity(communityId: ID!): Membership!
+  leaveCommunity(communityId: ID!): Boolean!
+  updateMemberRole(communityId: ID!, userId: ID!, role: String!): Membership!
+  createPost(input: CreatePostInput!): Post!
+  updatePost(id: ID!, input: UpdatePostInput!): Post!
+  deletePost(id: ID!): Boolean!
+  createComment(postId: ID!, content: String!, parentId: ID): Comment!
+  deleteComment(id: ID!): Boolean!
+  reactToPost(postId: ID!, type: String!): Reaction!
+  removeReaction(postId: ID!): Boolean!
+
+  # Event
+  createEvent(input: CreateEventInput!): Event!
+  updateEvent(id: ID!, input: UpdateEventInput!): Event!
+  deleteEvent(id: ID!): Boolean!
+  rsvp(eventId: ID!, status: String!): Attendee!
+  cancelRSVP(eventId: ID!): Boolean!
+  purchaseTicket(eventId: ID!, tierId: ID!, quantity: Int!): Ticket!
+  createSession(input: CreateSessionInput!): Session!
+  createSeries(input: CreateSeriesInput!): EventSeries!
+
+  # Competition
+  createCompetition(input: CreateCompetitionInput!): Competition!
+  updateCompetition(id: ID!, input: UpdateCompetitionInput!): Competition!
+  deleteCompetition(id: ID!): Boolean!
+  registerParticipant(competitionId: ID!): Participant!
+  unregisterParticipant(competitionId: ID!): Boolean!
+  submitEntry(input: SubmitEntryInput!): Entry!
+  submitScore(input: ScoreInput!): ScoreEntry!
+  submitJudgment(input: JudgmentInput!): Judgment!
+  distributePrizes(competitionId: ID!): Boolean!
+
+  # Advertising
+  createCampaign(input: CreateCampaignInput!): Campaign!
+  updateCampaign(id: ID!, input: UpdateCampaignInput!): Campaign!
+  createAdUnit(input: CreateAdUnitInput!): AdUnit!
+  approveAdUnit(adUnitId: ID!, approved: Boolean!): AdUnit!
+  recordImpression(adUnitId: ID!, requestId: ID!): Boolean!
+  recordClick(adUnitId: ID!, requestId: ID!): Boolean!
+
+  # Commerce
+  createProduct(input: CreateProductInput!): Product!
+  updateProduct(id: ID!, input: UpdateProductInput!): Product!
+  deleteProduct(id: ID!): Boolean!
+  createVariant(input: CreateVariantInput!): Variant!
+  updateVariant(id: ID!, input: UpdateVariantInput!): Variant!
+  deleteVariant(id: ID!): Boolean!
+  addToCart(productId: ID!, variantId: ID, quantity: Int!): Cart!
+  updateCartItem(itemId: ID!, quantity: Int!): Cart!
+  removeFromCart(itemId: ID!): Cart!
+  createCheckout(cartId: ID!, input: CheckoutInput!): Checkout!
+  createOrder(checkoutId: ID!, paymentIntentId: ID!): Order!
+  updateOrderStatus(id: ID!, status: String!): Order!
+  createReview(input: CreateReviewInput!): Review!
+
+  # Media
+  initiateUpload(input: UploadInput!): UploadSession!
+  completeUpload(uploadId: ID!, parts: [CompletedPartInput!]!): MediaAsset!
+  cancelUpload(uploadId: ID!): Boolean!
+  deleteMedia(id: ID!): Boolean!
+
+  # Licensing
+  createLicense(input: CreateLicenseInput!): License!
+  updateLicense(id: ID!, input: UpdateLicenseInput!): License!
+  terminateLicense(id: ID!, reason: String!): License!
+  registerContent(input: RegisterContentInput!): ContentRegistration!
+  recordUsage(input: UsageInput!): UsageRecord!
+
+  # Trust
+  reportSignal(input: SignalInput!): Boolean!
+  assessRisk(userId: ID!, action: String!, context: JSON): RiskAssessment!
+  detectFraud(input: FraudInput!): FraudDetectionResult!
+  updateFraudCase(caseId: ID!, input: FraudCaseInput!): FraudCase!
+  createRiskRule(input: RiskRuleInput!): RiskRule!
+  updateRiskRule(id: ID!, input: RiskRuleUpdateInput!): RiskRule!
+
+  # Subscriptions
+  # Handled by specific resolvers
+}
+
+type Subscription {
+  # Chat
+  chatMessage(streamId: ID!): ChatMessage!
+  chatDeleted(streamId: ID!): ChatDeleted!
+
+  # Notification
+  notificationReceived(userId: ID!): Notification!
+
+  # Messaging
+  messageReceived(userId: ID!): DirectMessage!
+  typingIndicator(conversationId: ID!): TypingIndicator!
+}
+
+# =============================================================================
+# Types
+# =============================================================================
+
+type User {
+  id: ID!
+  email: String!
+  username: String!
+  displayName: String
+  avatarUrl: String
+  bannerUrl: String
+  bio: String
+  isCreator: Boolean!
+  isVerified: Boolean!
+  emailVerified: Boolean!
+  roles: [String!]!
+  createdAt: String!
+  updatedAt: String!
+}
+
+type AuthPayload {
+  user: User!
+  accessToken: String!
+  refreshToken: String!
+  expiresIn: Int!
+}
+
+type TokenPayload {
+  accessToken: String!
+  refreshToken: String!
+  expiresIn: Int!
+}
+
+type Creator {
+  id: ID!
+  userId: ID!
+  username: String!
+  displayName: String
+  avatarUrl: String
+  bannerUrl: String
+  bio: String
+  category: String
+  languages: [String!]
+  isVerified: Boolean!
+  followerCount: Int!
+  subscriberCount: Int!
+  totalStreams: Int!
+  totalViewers: Int!
+  createdAt: String!
+}
+
+type CreatorStats {
+  totalStreams: Int!
+  totalViewers: Int!
+  totalHoursStreamed: Int!
+  totalFollowers: Int!
+  totalSubscribers: Int!
+  totalEarnings: Int!
+  avgViewers: Int!
+  peakViewers: Int!
+}
+
+type Stream {
+  id: ID!
+  creatorId: ID!
+  title: String!
+  description: String
+  thumbnailUrl: String
+  streamKey: String
+  playbackUrl: String
+  status: String!
+  category: String
+  tags: [String!]
+  isLive: Boolean!
+  viewerCount: Int!
+  startedAt: String
+  endedAt: String
+  createdAt: String!
+}
+
+type StreamKey {
+  streamId: ID!
+  key: String!
+  rtmpUrl: String!
+  playbackUrl: String!
+}
+
+type Balance {
+  userId: ID!
+  available: Int!
+  pending: Int!
+  currency: String!
+}
+
+enum SortOrder {
+  ASC
+  DESC
+}
+
+input DateRangeInput {
+  start: String!
+  end: String!
+}
+
+input MoneyInput {
+  currency: String!
+  amount: Int!
+}
+
+input UpdateUserInput {
+  displayName: String
+  bio: String
+  avatarUrl: String
+  bannerUrl: String
+}
+
+input UpdateCreatorInput {
+  displayName: String
+  bio: String
+  avatarUrl: String
+  bannerUrl: String
+  category: String
+  languages: [String!]
+}
+
+input CreateStreamInput {
+  title: String!
+  description: String
+  category: String
+  tags: [String!]
+  thumbnailUrl: String
+}
+
+input UpdateStreamInput {
+  title: String
+  description: String
+  category: String
+  tags: [String!]
+  thumbnailUrl: String
+}
+
+type Pagination {
+  page: Int!
+  pageSize: Int!
+  total: Int!
+}
+
+type UserConnection {
+  edges: [User!]!
+  pagination: Pagination!
+}
+
+type StreamConnection {
+  edges: [Stream!]!
+  pagination: Pagination!
+}
+
+type FollowerConnection {
+  edges: [Follower!]!
+  pagination: Pagination!
+}
+
+type FollowingConnection {
+  edges: [Following!]!
+  pagination: Pagination!
+}
+
+type ViewerHistoryConnection {
+  edges: [ViewHistoryEntry!]!
+  pagination: Pagination!
+}
+
+type TransactionConnection {
+  edges: [Transaction!]!
+  pagination: Pagination!
+}
+
+type ConversationConnection {
+  edges: [Conversation!]!
+  pagination: Pagination!
+}
+
+type SubscriptionConnection {
+  edges: [Subscription!]!
+  pagination: Pagination!
+}
+
+type SubscriberConnection {
+  edges: [Subscription!]!
+  pagination: Pagination!
+}
+
+type InvoiceConnection {
+  edges: [Invoice!]!
+  pagination: Pagination!
+}
+
+type GiftCardConnection {
+  edges: [GiftCard!]!
+  pagination: Pagination!
+}
+
+type NotificationConnection {
+  edges: [Notification!]!
+  pagination: Pagination!
+}
+
+type FeedConnection {
+  edges: [FeedItem!]!
+  pagination: Pagination!
+}
+
+type SearchResultConnection {
+  edges: [SearchResult!]!
+  pagination: Pagination!
+}
+
+type ReportConnection {
+  edges: [ContentReport!]!
+  pagination: Pagination!
+}
+
+type CommunityConnection {
+  edges: [Community!]!
+  pagination: Pagination!
+}
+
+type MemberConnection {
+  edges: [Membership!]!
+  pagination: Pagination!
+}
+
+type PostConnection {
+  edges: [Post!]!
+  pagination: Pagination!
+}
+
+type CommentConnection {
+  edges: [Comment!]!
+  pagination: Pagination!
+}
+
+type EventConnection {
+  edges: [Event!]!
+  pagination: Pagination!
+}
+
+type AttendeeConnection {
+  edges: [Attendee!]!
+  pagination: Pagination!
+}
+
+type SeriesConnection {
+  edges: [EventSeries!]!
+  pagination: Pagination!
+}
+
+type CompetitionConnection {
+  edges: [Competition!]!
+  pagination: Pagination!
+}
+
+type ParticipantConnection {
+  edges: [Participant!]!
+  pagination: Pagination!
+}
+
+type CampaignConnection {
+  edges: [Campaign!]!
+  pagination: Pagination!
+}
+
+type ProductConnection {
+  edges: [Product!]!
+  pagination: Pagination!
+}
+
+type OrderConnection {
+  edges: [Order!]!
+  pagination: Pagination!
+}
+
+type ReviewConnection {
+  edges: [Review!]!
+  pagination: Pagination!
+}
+
+type LicenseConnection {
+  edges: [License!]!
+  pagination: Pagination!
+}
+
+type CollectionConnection {
+  edges: [Collection!]!
+  pagination: Pagination!
+}
+
+type FraudCaseConnection {
+  edges: [FraudCase!]!
+  pagination: Pagination!
+}
+
+# Remaining types imported from proto definitions
+# (Full type definitions follow the proto schemas in api/grpc/)

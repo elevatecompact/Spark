@@ -1,0 +1,177 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service TrustService {
+  rpc GetReputation(GetReputationRequest) returns (Reputation);
+  rpc ReportSignal(ReportSignalRequest) returns (Empty);
+  rpc AssessRisk(AssessRiskRequest) returns (RiskAssessment);
+  rpc DetectFraud(DetectFraudRequest) returns (FraudDetectionResult);
+  rpc GetFraudCases(GetFraudCasesRequest) returns (GetFraudCasesResponse);
+  rpc UpdateFraudCase(UpdateFraudCaseRequest) returns (FraudCase);
+  rpc GetRiskRules(GetRiskRulesRequest) returns (GetRiskRulesResponse);
+  rpc CreateRiskRule(CreateRiskRuleRequest) returns (RiskRule);
+  rpc UpdateRiskRule(UpdateRiskRuleRequest) returns (RiskRule);
+  rpc GetMetrics(GetMetricsRequest) returns (TrustMetrics);
+}
+
+message Reputation {
+  string user_id = 1;
+  int64 score = 2;
+  string level = 3;
+  int64 total_signals = 4;
+  int64 positive_signals = 5;
+  int64 negative_signals = 6;
+  double decay_factor = 7;
+  google.protobuf.Timestamp last_updated = 8;
+}
+
+message GetReputationRequest {
+  string user_id = 1;
+}
+
+message Signal {
+  string user_id = 1;
+  string type = 2;
+  string category = 3;
+  double weight = 4;
+  string description = 5;
+  string source = 6;
+  map<string, string> metadata = 7;
+}
+
+message ReportSignalRequest {
+  Signal signal = 1;
+}
+
+message RiskAssessment {
+  string user_id = 1;
+  string action = 2;
+  string risk_level = 3;
+  double risk_score = 4;
+  repeated string triggered_rules = 5;
+  string recommended_action = 6;
+  string assessment_id = 7;
+  google.protobuf.Timestamp assessed_at = 8;
+}
+
+message AssessRiskRequest {
+  string user_id = 1;
+  string action = 2;
+  map<string, string> context = 3;
+}
+
+message FraudDetectionResult {
+  string assessment_id = 1;
+  bool is_fraudulent = 2;
+  double fraud_score = 3;
+  string fraud_type = 4;
+  repeated string indicators = 5;
+  string recommended_action = 6;
+  google.protobuf.Timestamp assessed_at = 7;
+}
+
+message DetectFraudRequest {
+  string user_id = 1;
+  string event_type = 2;
+  map<string, string> event_data = 3;
+  string ip_address = 4;
+  string user_agent = 5;
+}
+
+message FraudCase {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;
+  string status = 4;
+  string severity = 5;
+  double fraud_score = 6;
+  string description = 7;
+  repeated string evidence = 8;
+  string assigned_to = 9;
+  string resolution = 10;
+  google.protobuf.Timestamp created_at = 11;
+  google.protobuf.Timestamp updated_at = 12;
+  google.protobuf.Timestamp resolved_at = 13;
+}
+
+message GetFraudCasesRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string status = 3;
+  string type = 4;
+  string severity = 5;
+}
+
+message GetFraudCasesResponse {
+  repeated FraudCase cases = 1;
+  Pagination pagination = 2;
+}
+
+message UpdateFraudCaseRequest {
+  string case_id = 1;
+  string status = 2;
+  string assigned_to = 3;
+  string resolution = 4;
+  string note = 5;
+}
+
+message RiskRule {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string event_type = 4;
+  string condition = 5;
+  double score_threshold = 6;
+  string action = 7;
+  int64 cooldown_seconds = 8;
+  bool is_active = 9;
+  google.protobuf.Timestamp created_at = 10;
+}
+
+message GetRiskRulesRequest {}
+message GetRiskRulesResponse {
+  repeated RiskRule rules = 1;
+}
+
+message CreateRiskRuleRequest {
+  string name = 1;
+  string description = 2;
+  string event_type = 3;
+  string condition = 4;
+  double score_threshold = 5;
+  string action = 6;
+  int64 cooldown_seconds = 7;
+}
+
+message UpdateRiskRuleRequest {
+  string rule_id = 1;
+  string name = 2;
+  string description = 3;
+  string condition = 4;
+  double score_threshold = 5;
+  string action = 6;
+  int64 cooldown_seconds = 7;
+  bool is_active = 8;
+}
+
+message TrustMetrics {
+  int64 total_users_scored = 1;
+  double avg_reputation = 2;
+  int64 total_signals_processed = 3;
+  int64 fraud_cases_opened = 4;
+  int64 fraud_cases_resolved = 5;
+  double fraud_rate = 6;
+  double false_positive_rate = 7;
+  repeated DataPoint signal_history = 8;
+  repeated DataPoint fraud_history = 9;
+}
+
+message GetMetricsRequest {
+  DateRange range = 1;
+}

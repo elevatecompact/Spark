@@ -1,0 +1,175 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service DiscoveryService {
+  rpc GetPersonalizedFeed(GetPersonalizedFeedRequest) returns (GetPersonalizedFeedResponse);
+  rpc GetTrendingFeed(GetTrendingFeedRequest) returns (GetTrendingFeedResponse);
+  rpc GetCategoryFeed(GetCategoryFeedRequest) returns (GetCategoryFeedResponse);
+  rpc GetNewFeed(GetNewFeedRequest) returns (GetNewFeedResponse);
+  rpc GetRelatedFeed(GetRelatedFeedRequest) returns (GetRelatedFeedResponse);
+  rpc GetCategories(GetCategoriesRequest) returns (GetCategoriesResponse);
+  rpc GetCollections(GetCollectionsRequest) returns (GetCollectionsResponse);
+  rpc GetCollection(GetCollectionRequest) returns (Collection);
+  rpc GetTrendingCreators(GetTrendingCreatorsRequest) returns (GetTrendingCreatorsResponse);
+  rpc GetStaffPicks(GetStaffPicksRequest) returns (GetStaffPicksResponse);
+}
+
+message DiscoveryFeedItem {
+  string id = 1;
+  string stream_id = 2;
+  string creator_id = 3;
+  string creator_username = 4;
+  string creator_avatar = 5;
+  string title = 6;
+  string description = 7;
+  string thumbnail_url = 8;
+  string category = 9;
+  int64 viewer_count = 10;
+  bool is_live = 11;
+  bool is_featured = 12;
+  string reason = 13;
+  string collection_id = 14;
+  double score = 15;
+}
+
+message GetPersonalizedFeedRequest {
+  string user_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetPersonalizedFeedResponse {
+  repeated DiscoveryFeedItem items = 1;
+  Pagination pagination = 2;
+}
+
+message GetTrendingFeedRequest {
+  int32 limit = 1;
+  string category = 2;
+}
+
+message GetTrendingFeedResponse {
+  repeated DiscoveryFeedItem items = 1;
+}
+
+message GetCategoryFeedRequest {
+  string category = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetCategoryFeedResponse {
+  repeated DiscoveryFeedItem items = 1;
+  Pagination pagination = 2;
+}
+
+message GetNewFeedRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+}
+
+message GetNewFeedResponse {
+  repeated DiscoveryFeedItem items = 1;
+  Pagination pagination = 2;
+}
+
+message GetRelatedFeedRequest {
+  string stream_id = 1;
+  int32 limit = 2;
+}
+
+message GetRelatedFeedResponse {
+  repeated DiscoveryFeedItem items = 1;
+}
+
+message Category {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string description = 4;
+  string icon_url = 5;
+  string parent_id = 6;
+  repeated Category children = 7;
+  int64 stream_count = 8;
+  int64 viewer_count = 9;
+}
+
+message GetCategoriesRequest {
+  bool include_children = 1;
+}
+
+message GetCategoriesResponse {
+  repeated Category categories = 1;
+}
+
+message Collection {
+  string id = 1;
+  string title = 2;
+  string description = 3;
+  string type = 4;
+  string cover_url = 5;
+  repeated DiscoveryFeedItem items = 6;
+  string curated_by = 7;
+  int64 item_count = 8;
+  google.protobuf.Timestamp created_at = 9;
+}
+
+message GetCollectionsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string type = 3;
+}
+
+message GetCollectionsResponse {
+  repeated Collection collections = 1;
+  Pagination pagination = 2;
+}
+
+message GetCollectionRequest {
+  string collection_id = 1;
+}
+
+message TrendingCreator {
+  string creator_id = 1;
+  string username = 2;
+  string display_name = 3;
+  string avatar_url = 4;
+  string category = 5;
+  int64 follower_count = 6;
+  int64 viewer_count = 7;
+  double growth_rate = 8;
+  bool is_live = 9;
+}
+
+message GetTrendingCreatorsRequest {
+  int32 limit = 1;
+  string category = 2;
+}
+
+message GetTrendingCreatorsResponse {
+  repeated TrendingCreator creators = 1;
+}
+
+message StaffPickItem {
+  string id = 1;
+  string stream_id = 2;
+  string creator_id = 3;
+  string creator_username = 4;
+  string title = 5;
+  string thumbnail_url = 6;
+  string reason = 7;
+}
+
+message GetStaffPicksRequest {
+  int32 limit = 1;
+}
+
+message GetStaffPicksResponse {
+  repeated StaffPickItem items = 1;
+}

@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service ChatService {
+  rpc SendMessage(SendMessageRequest) returns (ChatMessage);
+  rpc DeleteMessage(DeleteMessageRequest) returns (Empty);
+  rpc GetMessages(GetMessagesRequest) returns (GetMessagesResponse);
+  rpc ModerateMessage(ModerateMessageRequest) returns (ChatMessage);
+  rpc GetEmotes(GetEmotesRequest) returns (GetEmotesResponse);
+  rpc SendWhisper(SendWhisperRequest) returns (ChatMessage);
+}
+
+message ChatMessage {
+  string id = 1;
+  string stream_id = 2;
+  string user_id = 3;
+  string username = 4;
+  string display_name = 5;
+  string avatar_url = 6;
+  string content = 7;
+  repeated string emotes = 8;
+  bool is_moderator = 9;
+  bool is_subscriber = 10;
+  bool is_vip = 11;
+  bool is_broadcaster = 12;
+  google.protobuf.Timestamp created_at = 13;
+}
+
+message SendMessageRequest {
+  string stream_id = 1;
+  string user_id = 2;
+  string content = 3;
+}
+
+message DeleteMessageRequest {
+  string message_id = 1;
+  string stream_id = 2;
+  string moderator_id = 3;
+}
+
+message GetMessagesRequest {
+  string stream_id = 1;
+  int32 limit = 2;
+  string before_id = 3;
+  string after_id = 4;
+}
+
+message GetMessagesResponse {
+  repeated ChatMessage messages = 1;
+  bool has_more = 2;
+}
+
+message ModerateMessageRequest {
+  string message_id = 1;
+  string moderator_id = 2;
+  string action = 3;
+  string reason = 4;
+}
+
+message Emote {
+  string id = 1;
+  string code = 2;
+  string image_url = 3;
+  bool is_global = 4;
+}
+
+message GetEmotesRequest {
+  string stream_id = 1;
+}
+
+message GetEmotesResponse {
+  repeated Emote emotes = 1;
+}
+
+message SendWhisperRequest {
+  string from_user_id = 1;
+  string to_user_id = 2;
+  string content = 3;
+}

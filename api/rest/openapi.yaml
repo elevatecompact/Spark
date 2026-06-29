@@ -1,0 +1,372 @@
+openapi: "3.1.0"
+info:
+  title: Spark API
+  version: "1.0.0"
+  description: Spark live streaming platform REST API
+
+servers:
+  - url: https://api.spark.dev/api/v1
+    description: Production
+  - url: http://localhost:8080/api/v1
+    description: Local development
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+security:
+  - bearerAuth: []
+
+paths:
+  # Auth
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "200":
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      responses:
+        "200":
+          description: Token refreshed
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      responses:
+        "204":
+          description: Logged out
+
+  # Users
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+    put:
+      tags: [Users]
+      summary: Update current user
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # Streams
+  /streams:
+    get:
+      tags: [Streams]
+      summary: List streams
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+        - name: is_live
+          in: query
+          schema:
+            type: boolean
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StreamListResponse"
+
+    post:
+      tags: [Streams]
+      summary: Create stream
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stream"
+
+  /streams/{id}:
+    get:
+      tags: [Streams]
+      summary: Get stream
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stream"
+
+  # Chat
+  /chat/streams/{streamId}/messages:
+    get:
+      tags: [Chat]
+      summary: Get chat messages
+      parameters:
+        - name: streamId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+        - name: before_id
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # Wallet
+  /wallet/balance:
+    get:
+      tags: [Wallet]
+      summary: Get wallet balance
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Balance"
+
+  /wallet/transactions:
+    get:
+      tags: [Wallet]
+      summary: List transactions
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # Notifications
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # Search
+  /search:
+    get:
+      tags: [Search]
+      summary: Search
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: page
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+
+  # Discovery
+  /discovery/feed:
+    get:
+      tags: [Discovery]
+      summary: Get personalized feed
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        username: { type: string }
+        display_name: { type: string }
+        avatar_url: { type: string }
+        banner_url: { type: string }
+        bio: { type: string }
+        is_creator: { type: boolean }
+        is_verified: { type: boolean }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    RegisterRequest:
+      type: object
+      required: [email, username, password]
+      properties:
+        email: { type: string, format: email }
+        username: { type: string }
+        password: { type: string, format: password }
+        display_name: { type: string }
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+
+    AuthResponse:
+      type: object
+      properties:
+        user: { $ref: "#/components/schemas/User" }
+        access_token: { type: string }
+        refresh_token: { type: string }
+        expires_in: { type: integer }
+
+    Balance:
+      type: object
+      properties:
+        user_id: { type: string }
+        available: { type: integer }
+        pending: { type: integer }
+        currency: { type: string }
+
+    Stream:
+      type: object
+      properties:
+        id: { type: string }
+        creator_id: { type: string }
+        title: { type: string }
+        description: { type: string }
+        thumbnail_url: { type: string }
+        status: { type: string }
+        category: { type: string }
+        tags:
+          type: array
+          items: { type: string }
+        is_live: { type: boolean }
+        viewer_count: { type: integer }
+        started_at: { type: string, format: date-time }
+        ended_at: { type: string, format: date-time }
+
+    StreamListResponse:
+      type: object
+      properties:
+        streams:
+          type: array
+          items:
+            $ref: "#/components/schemas/Stream"
+        pagination:
+          type: object
+          properties:
+            page: { type: integer }
+            page_size: { type: integer }
+            total: { type: integer }
+
+    ErrorResponse:
+      type: object
+      properties:
+        message: { type: string }
+        code: { type: string }
+        details:
+          type: array
+          items:
+            type: object
+            properties:
+              field: { type: string }
+              message: { type: string }

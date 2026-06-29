@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service ModerationService {
+  rpc ScanText(ScanTextRequest) returns (ScanResult);
+  rpc ScanImage(ScanImageRequest) returns (ScanResult);
+  rpc ReviewReport(ReviewReportRequest) returns (ContentReport);
+  rpc GetReports(GetReportsRequest) returns (GetReportsResponse);
+  rpc TakeAction(TakeActionRequest) returns (ModerationAction);
+  rpc GetActions(GetActionsRequest) returns (GetActionsResponse);
+  rpc GetStats(GetStatsRequest) returns (ModerationStats);
+  rpc CreateRule(CreateRuleRequest) returns (ModerationRule);
+  rpc UpdateRule(UpdateRuleRequest) returns (ModerationRule);
+  rpc ListRules(ListRulesRequest) returns (ListRulesResponse);
+}
+
+message ScanTextRequest {
+  string content = 1;
+  string user_id = 2;
+  string context = 3;
+}
+
+message ScanImageRequest {
+  string image_url = 1;
+  string user_id = 2;
+  string context = 3;
+}
+
+message ScanResult {
+  bool is_flagged = 1;
+  float confidence = 2;
+  repeated string categories = 3;
+  repeated string labels = 4;
+  string action = 5;
+  string moderation_id = 6;
+}
+
+message ContentReport {
+  string id = 1;
+  string reporter_id = 2;
+  string target_id = 3;
+  string target_type = 4;
+  string reason = 5;
+  string description = 6;
+  string status = 7;
+  string reviewer_id = 8;
+  string review_notes = 9;
+  google.protobuf.Timestamp created_at = 10;
+  google.protobuf.Timestamp reviewed_at = 11;
+}
+
+message GetReportsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string status = 3;
+  string target_type = 4;
+}
+
+message GetReportsResponse {
+  repeated ContentReport reports = 1;
+  Pagination pagination = 2;
+}
+
+message ReviewReportRequest {
+  string report_id = 1;
+  string reviewer_id = 2;
+  string action = 3;
+  string notes = 4;
+}
+
+message ModerationAction {
+  string id = 1;
+  string target_id = 2;
+  string target_type = 3;
+  string action_type = 4;
+  string reason = 5;
+  string moderator_id = 6;
+  string duration = 7;
+  bool is_active = 8;
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp expires_at = 10;
+}
+
+message TakeActionRequest {
+  string target_id = 1;
+  string target_type = 2;
+  string action_type = 3;
+  string reason = 4;
+  string moderator_id = 5;
+  string duration = 6;
+}
+
+message GetActionsRequest {
+  string target_id = 1;
+  int32 page = 2;
+  int32 page_size = 3;
+}
+
+message GetActionsResponse {
+  repeated ModerationAction actions = 1;
+  Pagination pagination = 2;
+}
+
+message ModerationStats {
+  int64 total_reports = 1;
+  int64 pending_reports = 2;
+  int64 resolved_reports = 3;
+  int64 total_actions = 4;
+  int64 active_actions = 5;
+  double avg_response_time = 6;
+  double accuracy_rate = 7;
+}
+
+message GetStatsRequest {}
+message ModerationRule {
+  string id = 1;
+  string name = 2;
+  string type = 3;
+  string pattern = 4;
+  string action = 5;
+  int64 priority = 6;
+  bool is_active = 7;
+  google.protobuf.Timestamp created_at = 8;
+  google.protobuf.Timestamp updated_at = 9;
+}
+
+message CreateRuleRequest {
+  string name = 1;
+  string type = 2;
+  string pattern = 3;
+  string action = 4;
+  int64 priority = 5;
+}
+
+message UpdateRuleRequest {
+  string rule_id = 1;
+  string name = 2;
+  string type = 3;
+  string pattern = 4;
+  string action = 5;
+  int64 priority = 6;
+  bool is_active = 7;
+}
+
+message ListRulesRequest {}
+message ListRulesResponse {
+  repeated ModerationRule rules = 1;
+}

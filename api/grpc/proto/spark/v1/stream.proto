@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+package spark.v1;
+
+option go_package = "github.com/elevatecompact/spark/api/grpc/gen/go/spark/v1;sparkv1";
+
+import "google/protobuf/timestamp.proto";
+import "spark/v1/common.proto";
+
+service StreamService {
+  rpc CreateStream(CreateStreamRequest) returns (Stream);
+  rpc GetStream(GetStreamRequest) returns (Stream);
+  rpc UpdateStream(UpdateStreamRequest) returns (Stream);
+  rpc DeleteStream(DeleteStreamRequest) returns (Empty);
+  rpc ListStreams(ListStreamsRequest) returns (ListStreamsResponse);
+  rpc StartStream(StartStreamRequest) returns (Stream);
+  rpc EndStream(EndStreamRequest) returns (Stream);
+  rpc GetStreamKey(GetStreamKeyRequest) returns (StreamKey);
+  rpc RegenerateStreamKey(RegenerateStreamKeyRequest) returns (StreamKey);
+}
+
+message Stream {
+  string id = 1;
+  string creator_id = 2;
+  string title = 3;
+  string description = 4;
+  string thumbnail_url = 5;
+  string stream_key = 6;
+  string playback_url = 7;
+  string status = 8;
+  string category = 9;
+  repeated string tags = 10;
+  bool is_live = 11;
+  int64 viewer_count = 12;
+  int64 peak_viewer_count = 13;
+  string rtmp_url = 14;
+  google.protobuf.Timestamp started_at = 15;
+  google.protobuf.Timestamp ended_at = 16;
+  google.protobuf.Timestamp created_at = 17;
+  google.protobuf.Timestamp updated_at = 18;
+}
+
+message CreateStreamRequest {
+  string creator_id = 1;
+  string title = 2;
+  string description = 3;
+  string category = 4;
+  repeated string tags = 5;
+  string thumbnail_url = 6;
+}
+
+message GetStreamRequest {
+  string stream_id = 1;
+}
+
+message UpdateStreamRequest {
+  string stream_id = 1;
+  string title = 2;
+  string description = 3;
+  string category = 4;
+  repeated string tags = 5;
+  string thumbnail_url = 6;
+}
+
+message DeleteStreamRequest {
+  string stream_id = 1;
+}
+
+message ListStreamsRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string creator_id = 3;
+  string category = 4;
+  bool is_live = 5;
+  string search = 6;
+}
+
+message ListStreamsResponse {
+  repeated Stream streams = 1;
+  Pagination pagination = 2;
+}
+
+message StartStreamRequest {
+  string stream_id = 1;
+  string rtmp_url = 2;
+}
+
+message EndStreamRequest {
+  string stream_id = 1;
+}
+
+message StreamKey {
+  string stream_id = 1;
+  string key = 2;
+  string rtmp_url = 3;
+  string playback_url = 4;
+}
+
+message GetStreamKeyRequest {
+  string stream_id = 1;
+}
+
+message RegenerateStreamKeyRequest {
+  string stream_id = 1;
+}
