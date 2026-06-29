@@ -8,8 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io/spark-platform
-  GO_VERSION: "1.22"
-  GOLANGCI_LINT_VERSION: v1.56
+  GO_VERSION: "1.25"
+  GOLANGCI_LINT_VERSION: v1.64
 
 jobs:
   lint:

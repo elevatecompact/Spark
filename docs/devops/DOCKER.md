@@ -6,7 +6,7 @@ Every Titan service is packaged as a distroless or Alpine-based Docker image. Im
 
 ## Base Images
 
-- **Go services**: `golang:1.22-alpine` (build) → `gcr.io/distroless/base` (runtime)
+- **Go services**: `golang:1.25-alpine` (build) → `gcr.io/distroless/base` (runtime)
 - **Rust services**: `rust:1.77-slim` (build) → `gcr.io/distroless/cc` (runtime)
 - **Python/ML services**: custom `titan/python-base` with pinned system deps
 - **Node.js services**: `node:24-alpine` with production-only dependencies

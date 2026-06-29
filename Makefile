@@ -15,7 +15,7 @@ PYTHON_SERVICES := ai/ranking-ai ai/fraud-ai ai/moderation-ai ai/translation-ai 
 
 # -- Tooling ------------------------------------------------------------------
 GO ?= go
-GO_VERSION ?= 1.22
+GO_VERSION ?= 1.25
 RUST ?= cargo
 NODE ?= node
 NPM ?= npm

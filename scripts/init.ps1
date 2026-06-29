@@ -41,10 +41,10 @@ $goVersion = "0.0"
 try {
     $goVersion = (go version 2>$null) -replace '.*go(\d+\.\d+).*', '$1'
 } catch {}
-if ([version]$goVersion -ge [version]"1.22") {
+if ([version]$goVersion -ge [version]"1.25") {
     Write-Success "Go $goVersion detected"
 } else {
-    Write-Error "Go >= 1.22 is required (found $goVersion)"
+    Write-Error "Go >= 1.25 is required (found $goVersion)"
     Write-Error "Download from: https://go.dev/dl/"
     exit 1
 }
