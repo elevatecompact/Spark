@@ -8,10 +8,11 @@ on:
 
 permissions:
   contents: read
+  packages: write
   security-events: write
 
 env:
-  REGISTRY: ghcr.io/spark-platform
+  REGISTRY: ghcr.io/elevatecompact
   GO_VERSION: "1.25"
 
 jobs:
