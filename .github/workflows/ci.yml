@@ -9,7 +9,6 @@ on:
 env:
   REGISTRY: ghcr.io/spark-platform
   GO_VERSION: "1.25"
-  GOLANGCI_LINT_VERSION: v1.64
 
 jobs:
   lint:
@@ -32,11 +31,6 @@ jobs:
               (cd "$dir" && go mod tidy 2>&1)
             fi
           done
-
-      - name: Install golangci-lint
-        uses: golangci/golangci-lint-action@v6
-        with:
-          version: ${{ env.GOLANGCI_LINT_VERSION }}
 
       - name: Lint Go services
         run: |
