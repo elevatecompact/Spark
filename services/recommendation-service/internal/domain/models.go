@@ -21,9 +21,9 @@ type InteractionType string
 const (
 	InteractionClick      InteractionType = "click"
 	InteractionWatch      InteractionType = "watch"
-	InteractionRate      InteractionType = "rate"
-	InteractionSubscribe InteractionType = "subscribe"
-	InteractionDismiss   InteractionType = "dismiss"
+	InteractionRate       InteractionType = "rate"
+	InteractionSubscribe  InteractionType = "subscribe"
+	InteractionDismiss    InteractionType = "dismiss"
 )
 
 type UserEmbedding struct {
@@ -52,18 +52,19 @@ type Recommendation struct {
 	ContentID uuid.UUID `json:"content_id"`
 	Score     float64   `json:"score"`
 	Reason    string    `json:"reason"`
+	ReasonSet []string  `json:"reason_set,omitempty"`
 }
 
 type Feed struct {
-	Type      FeedType          `json:"type"`
-	UserID    uuid.UUID         `json:"user_id"`
-	Items     []Recommendation  `json:"items"`
-	ServedAt  time.Time         `json:"served_at"`
+	Type     FeedType         `json:"type"`
+	UserID   uuid.UUID        `json:"user_id"`
+	Items    []Recommendation `json:"items"`
+	ServedAt time.Time        `json:"served_at"`
 }
 
 type ModelInfo struct {
-	Version     string    `json:"version"`
-	DeployedAt  time.Time `json:"deployed_at"`
-	Metrics     string    `json:"metrics"`
-	IsActive    bool      `json:"is_active"`
+	Version    string    `json:"version"`
+	DeployedAt time.Time `json:"deployed_at"`
+	Metrics    string    `json:"metrics"`
+	IsActive   bool      `json:"is_active"`
 }

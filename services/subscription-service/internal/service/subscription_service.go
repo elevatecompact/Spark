@@ -23,13 +23,13 @@ type SubscriptionService interface {
 }
 
 type subscriptionService struct {
-	subRepo  repository.SubscriptionRepository
-	planRepo repository.PlanRepository
-	invRepo  repository.InvoiceRepository
-	eventPub events.EventProducer
+	subRepo   repository.SubscriptionRepository
+	planRepo  repository.PlanRepository
+	invRepo   repository.InvoiceRepository
+	eventPub  events.EventProducer
 	graceDays int
-	maxActive  int
-	trialDays  int
+	maxActive int
+	trialDays int
 }
 
 func NewSubscriptionService(
@@ -84,14 +84,14 @@ func (s *subscriptionService) Subscribe(ctx context.Context, userID uuid.UUID, r
 	}
 
 	sub := &domain.Subscription{
-		ID:                uuid.New(),
-		UserID:            userID,
-		PlanID:            req.PlanID,
-		Status:            domain.SubActive,
+		ID:                 uuid.New(),
+		UserID:             userID,
+		PlanID:             req.PlanID,
+		Status:             domain.SubActive,
 		CurrentPeriodStart: now,
-		CurrentPeriodEnd:  periodEnd,
-		CreatedAt:         now,
-		UpdatedAt:         now,
+		CurrentPeriodEnd:   periodEnd,
+		CreatedAt:          now,
+		UpdatedAt:          now,
 	}
 
 	if err := s.subRepo.Create(ctx, sub); err != nil {
@@ -152,11 +152,13 @@ func (s *subscriptionService) ChangePlan(ctx context.Context, subID, userID, new
 		return nil, domain.ErrPlanInactive
 	}
 
-	if newPlan.PriceCents > oldPlan.PriceCents {
-		// upgrade
-	} else if newPlan.PriceCents < oldPlan.PriceCents {
-		// downgrade
+	// Proration: charge or credit the user the prorated difference between the
+	// old and new plans for the remainder of the current billing period.
+	prorated := computeProration(oldPlan.PriceCents, newPlan.PriceCents, sub.CurrentPeriodStart, sub.CurrentPeriodEnd)
+	if err := s.recordProrationInvoice(ctx, sub, newPlan, prorated); err != nil {
+		return nil, err
 	}
+
 	sub.PlanID = newPlanID
 	sub.UpdatedAt = time.Now().UTC()
 	if err := s.subRepo.Update(ctx, sub); err != nil {
@@ -168,6 +170,64 @@ func (s *subscriptionService) ChangePlan(ctx context.Context, subID, userID, new
 	}
 
 	return sub, nil
+}
+
+func (s *subscriptionService) recordProrationInvoice(ctx context.Context, sub *domain.Subscription, newPlan *domain.SubscriptionPlan, proratedCents int64) error {
+	if proratedCents == 0 {
+		return nil
+	}
+	status := domain.InvoicePending
+	if proratedCents < 0 {
+		// Downgrade / refund: issue a credit invoice for the unused amount.
+		status = domain.InvoiceRefunded
+	}
+	inv := &domain.Invoice{
+		ID:             uuid.New(),
+		SubscriptionID: sub.ID,
+		AmountCents:    absInt64(proratedCents),
+		Currency:       newPlan.Currency,
+		Status:         status,
+		PeriodStart:    time.Now().UTC(),
+		PeriodEnd:      sub.CurrentPeriodEnd,
+		CreatedAt:      time.Now().UTC(),
+	}
+	if err := s.invRepo.Create(ctx, inv); err != nil {
+		return fmt.Errorf("failed to create proration invoice: %w", err)
+	}
+	log.Info().
+		Str("subscription_id", sub.ID.String()).
+		Int64("prorated_cents", proratedCents).
+		Str("status", string(status)).
+		Msg("proration invoice recorded")
+	return nil
+}
+
+// computeProration returns the prorated difference (newPlan - oldPlan) for the
+// remainder of the current period. A positive value means the user owes money
+// (upgrade), a negative value means a credit (downgrade).
+func computeProration(oldPrice, newPrice int64, periodStart, periodEnd time.Time) int64 {
+	total := periodEnd.Sub(periodStart)
+	if total <= 0 {
+		return newPrice - oldPrice
+	}
+	remaining := periodEnd.Sub(time.Now().UTC())
+	if remaining <= 0 {
+		return 0
+	}
+	// Use millisecond resolution so very short windows still produce sensible
+	// numbers and the multiplication cannot overflow int64 for any realistic
+	// subscription price (< 1e15 cents) or window (< 1e12 ms).
+	fractionMs := float64(remaining.Milliseconds()) / float64(total.Milliseconds())
+	diff := float64(newPrice - oldPrice)
+	prorated := int64(diff * fractionMs)
+	return prorated
+}
+
+func absInt64(v int64) int64 {
+	if v < 0 {
+		return -v
+	}
+	return v
 }
 
 func (s *subscriptionService) Cancel(ctx context.Context, subID, userID uuid.UUID) error {

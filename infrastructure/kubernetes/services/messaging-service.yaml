@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: messaging-service
+  namespace: spark
+  labels:
+    app: messaging-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: messaging-service
+  template:
+    metadata:
+      labels:
+        app: messaging-service
+    spec:
+      containers:
+        - name: messaging-service
+          image: ghcr.io/elevatecompact/messaging-service:latest
+          ports:
+            - containerPort: 4019
+          env:
+            - name: DATABASE_URL
+              value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/spark_messaging?sslmode=disable"
+            - name: REDIS_URL
+              value: "redis://$(REDIS_HOST):$(REDIS_PORT)/0"
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: spark-config
+                  key: KAFKA_BROKERS
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: spark-config
+                  key: LOG_LEVEL
+          envFrom:
+            - secretRef:
+                name: spark-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4019
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 4019
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "750m"
+              memory: "768Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: messaging-service
+  namespace: spark
+spec:
+  ports:
+    - name: http
+      port: 4019
+      targetPort: 4019
+  selector:
+    app: messaging-service

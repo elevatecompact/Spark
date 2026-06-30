@@ -1,0 +1,80 @@
+{{# This file uses Go template syntax #}}
+{{- range .Services }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Name }}
+  namespace: spark
+  labels:
+    app: {{ .Name }}
+spec:
+  replicas: {{ .Replicas }}
+  selector:
+    matchLabels:
+      app: {{ .Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Name }}
+    spec:
+      containers:
+        - name: {{ .Name }}
+          image: ghcr.io/elevatecompact/{{ .Name }}:latest
+          ports:
+            - containerPort: {{ .Port }}
+          env:
+            - name: DATABASE_URL
+              value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/{{ .Database }}?sslmode=disable"
+            - name: REDIS_URL
+              value: "redis://$(REDIS_HOST):$(REDIS_PORT)/0"
+            - name: KAFKA_BROKERS
+              valueFrom:
+                configMapKeyRef:
+                  name: spark-config
+                  key: KAFKA_BROKERS
+            - name: LOG_LEVEL
+              valueFrom:
+                configMapKeyRef:
+                  name: spark-config
+                  key: LOG_LEVEL
+            {{- if .NeedsClickHouse }}
+            - name: ANALYTICS_CLICKHOUSE_URL
+              value: "clickhouse://$(CLICKHOUSE_USER):$(CLICKHOUSE_PASSWORD)@clickhouse.spark.svc.cluster.local:9000/spark"
+            {{- end }}
+          envFrom:
+            - secretRef:
+                name: spark-secrets
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Port }}
+            initialDelaySeconds: 10
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: {{ .Port }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "{{ .CPU }}"
+              memory: "{{ .Memory }}"
+            limits:
+              cpu: "{{ .CPULimit }}"
+              memory: "{{ .MemoryLimit }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Name }}
+  namespace: spark
+spec:
+  ports:
+    - name: http
+      port: {{ .Port }}
+      targetPort: {{ .Port }}
+  selector:
+    app: {{ .Name }}
+{{ end }}

@@ -17,18 +17,12 @@ spec:
     spec:
       containers:
         - name: identity-service
-          image: spark/identity-service:latest
+          image: ghcr.io/elevatecompact/identity-service:latest
           ports:
-            - containerPort: 8080
-            - containerPort: 9090
+            - containerPort: 4016
           env:
-            - name: SPARK_ENVIRONMENT
-              valueFrom:
-                configMapKeyRef:
-                  name: spark-config
-                  key: SPARK_ENVIRONMENT
             - name: DATABASE_URL
-              value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/spark?sslmode=disable"
+              value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/spark_identity?sslmode=disable"
             - name: REDIS_URL
               value: "redis://$(REDIS_HOST):$(REDIS_PORT)/0"
             - name: KAFKA_BROKERS
@@ -47,13 +41,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /health
-              port: 8080
+              port: 4016
             initialDelaySeconds: 10
             periodSeconds: 15
           readinessProbe:
             httpGet:
               path: /ready
-              port: 8080
+              port: 4016
             initialDelaySeconds: 5
             periodSeconds: 10
           resources:
@@ -72,10 +66,7 @@ metadata:
 spec:
   ports:
     - name: http
-      port: 8080
-      targetPort: 8080
-    - name: grpc
-      port: 9090
-      targetPort: 9090
+      port: 4016
+      targetPort: 4016
   selector:
     app: identity-service

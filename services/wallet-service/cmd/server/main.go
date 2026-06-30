@@ -80,7 +80,22 @@ func main() {
 
 	walletSvc := service.NewWalletService(walletRepo, eventPub, cfg.MaxBalanceCents)
 	txnSvc := service.NewTransactionService(walletRepo, txnRepo, eventPub, cfg.MaxBalanceCents)
-	payProc := service.NewNoopPaymentProcessor()
+
+	// Wire the payment processor. We prefer Stripe Connect when its key is
+	// configured; otherwise we fall back to PayPal payouts. The noop processor
+	// is used only when no credentials are configured.
+	var payProc service.PaymentProcessor
+	switch {
+	case cfg.StripeSecretKey != "":
+		payProc = service.NewStripeConnectProcessor(cfg.StripeSecretKey)
+		log.Info().Msg("wallet payment processor: stripe connect")
+	case cfg.PayPalClientID != "" && cfg.PayPalClientSecret != "":
+		payProc = service.NewPayPalPayoutProcessor(cfg.PayPalClientID, cfg.PayPalClientSecret)
+		log.Info().Msg("wallet payment processor: paypal payouts")
+	default:
+		payProc = service.NewNoopPaymentProcessor()
+		log.Warn().Msg("wallet payment processor: noop (no credentials configured)")
+	}
 	payoutSvc := service.NewPayoutService(walletRepo, payoutRepo, eventPub, payProc, cfg.PayoutMinCents)
 
 	walletH := handler.NewWalletHandler(walletSvc)

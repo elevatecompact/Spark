@@ -237,11 +237,20 @@ func (s *notifService) TestEmail(ctx context.Context, email string) error {
 }
 
 func (s *notifService) DeliveryStats(ctx context.Context) (map[string]interface{}, error) {
+	stats, err := s.notifRepo.DeliveryStats(ctx)
+	if err != nil {
+		return nil, err
+	}
+	total := stats.PushDelivered + stats.EmailDelivered + stats.SMSDelivered + stats.InAppDelivered
+	bounceRate := 0.0
+	if total > 0 {
+		bounceRate = float64(stats.EmailDelivered) / float64(total)
+	}
 	return map[string]interface{}{
-		"push_delivered":  1500,
-		"email_delivered": 800,
-		"sms_delivered":   50,
-		"inapp_delivered": 3200,
-		"bounce_rate":     0.02,
+		"push_delivered":  stats.PushDelivered,
+		"email_delivered": stats.EmailDelivered,
+		"sms_delivered":   stats.SMSDelivered,
+		"inapp_delivered": stats.InAppDelivered,
+		"bounce_rate":     bounceRate,
 	}, nil
 }

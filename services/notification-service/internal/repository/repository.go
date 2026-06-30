@@ -19,6 +19,14 @@ type NotificationRepository interface {
 	MarkAllRead(ctx context.Context, userID uuid.UUID) error
 	Delete(ctx context.Context, id uuid.UUID) error
 	DeleteByUser(ctx context.Context, userID uuid.UUID) error
+	DeliveryStats(ctx context.Context) (*DeliveryStatsResult, error)
+}
+
+type DeliveryStatsResult struct {
+	PushDelivered  int64 `json:"push_delivered"`
+	EmailDelivered int64 `json:"email_delivered"`
+	SMSDelivered   int64 `json:"sms_delivered"`
+	InAppDelivered int64 `json:"inapp_delivered"`
 }
 
 type PreferenceRepository interface {
@@ -119,6 +127,21 @@ func (r *notifRepo) Delete(ctx context.Context, id uuid.UUID) error {
 		return domain.ErrNotifNotFound
 	}
 	return nil
+}
+
+func (r *notifRepo) DeliveryStats(ctx context.Context) (*DeliveryStatsResult, error) {
+	result := &DeliveryStatsResult{}
+	row := r.pool.QueryRow(ctx, `SELECT
+		COALESCE(SUM(CASE WHEN channel='push' THEN 1 ELSE 0 END), 0) AS push_delivered,
+		COALESCE(SUM(CASE WHEN channel='email' THEN 1 ELSE 0 END), 0) AS email_delivered,
+		COALESCE(SUM(CASE WHEN channel='sms' THEN 1 ELSE 0 END), 0) AS sms_delivered,
+		COALESCE(SUM(CASE WHEN channel='inapp' THEN 1 ELSE 0 END), 0) AS inapp_delivered
+	FROM notifications`)
+	err := row.Scan(&result.PushDelivered, &result.EmailDelivered, &result.SMSDelivered, &result.InAppDelivered)
+	if err == pgx.ErrNoRows {
+		return result, nil
+	}
+	return result, err
 }
 
 func (r *notifRepo) DeleteByUser(ctx context.Context, userID uuid.UUID) error {

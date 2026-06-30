@@ -23,7 +23,7 @@ spec:
               service:
                 name: identity-service
                 port:
-                  number: 8080
+                  number: 4016
           - path: /ws(/|$)(.*)
             pathType: ImplementationSpecific
             backend:

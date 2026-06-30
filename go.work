@@ -10,29 +10,29 @@ use (
 	packages/types
 	packages/utils
 	packages/validators
-	services/creator-service
-	services/identity-service
-	services/stream-service
-	services/viewer-service
-	services/chat-service
-	services/wallet-service
-	services/messaging-service
-	services/subscription-service
-	services/gift-service
-	services/payment-service
+	services/advertising-service
 	services/analytics-service
+	services/chat-service
+	services/commerce-service
+	services/community-service
+	services/competition-service
+	services/creator-service
+	services/discovery-service
+	services/event-service
+	services/gift-service
+	services/identity-service
+	services/licensing-service
+	services/media-service
+	services/messaging-service
+	services/moderation-service
 	services/notification-service
+	services/payment-service
 	services/recommendation-service
 	services/search-service
+	services/stream-service
+	services/subscription-service
 	services/translation-service
-	services/moderation-service
-	services/community-service
-	services/event-service
-	services/competition-service
-	services/advertising-service
-	services/commerce-service
-	services/media-service
-	services/licensing-service
-	services/discovery-service
 	services/trust-service
+	services/viewer-service
+	services/wallet-service
 )

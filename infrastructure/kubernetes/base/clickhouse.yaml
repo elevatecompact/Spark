@@ -1,0 +1,121 @@
+# ClickHouse is the analytics column store. Two-replica StatefulSet with
+# persistent volumes and a dedicated headless service.
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: clickhouse
+  namespace: spark
+spec:
+  serviceName: clickhouse
+  replicas: 2
+  selector:
+    matchLabels:
+      app: clickhouse
+  template:
+    metadata:
+      labels:
+        app: clickhouse
+    spec:
+      containers:
+        - name: clickhouse
+          image: clickhouse/clickhouse-server:24.3
+          ports:
+            - containerPort: 9000
+              name: tcp
+            - containerPort: 8123
+              name: http
+          env:
+            - name: CLICKHOUSE_DB
+              value: spark
+            - name: CLICKHOUSE_USER
+              valueFrom:
+                secretKeyRef:
+                  name: spark-secrets
+                  key: clickhouse-user
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: spark-secrets
+                  key: clickhouse-password
+            - name: CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT
+              value: "1"
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/clickhouse
+            - name: config
+              mountPath: /etc/clickhouse-server/config.d
+          readinessProbe:
+            tcpSocket:
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "2000m"
+              memory: "4Gi"
+      volumes:
+        - name: config
+          configMap:
+            name: clickhouse-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: clickhouse
+  namespace: spark
+spec:
+  ports:
+    - name: tcp
+      port: 9000
+    - name: http
+      port: 8123
+  selector:
+    app: clickhouse
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: clickhouse-config
+  namespace: spark
+data:
+  listen.xml: |
+    <clickhouse>
+      <listen_host>0.0.0.0</listen_host>
+      <tcp_port>9000</tcp_port>
+      <http_port>8123</http_port>
+      <max_connections>200</max_connections>
+      <keep_alive_timeout>3</keep_alive_timeout>
+      <max_concurrent_queries>100</max_concurrent_queries>
+      <uncompressed_cache_size>1073741824</uncompressed_cache_size>
+      <mark_cache_size>1073741824</mark_cache_size>
+    </clickhouse>
+  users.xml: |
+    <clickhouse>
+      <profiles>
+        <default>
+          <max_memory_usage>4000000000</max_memory_usage>
+          <use_uncompressed_cache>0</use_uncompressed_cache>
+        </default>
+      </profiles>
+    </clickhouse>
+  storage.xml: |
+    <clickhouse>
+      <storage_configuration>
+        <disks>
+          <default>
+            <keep_free_space_bytes>1073741824</keep_free_space_bytes>
+          </default>
+        </disks>
+      </storage_configuration>
+    </clickhouse>

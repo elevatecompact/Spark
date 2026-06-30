@@ -57,9 +57,11 @@ func main() {
 	devRepo := repository.NewDeviceRepository(pool)
 	tmplRepo := repository.NewTemplateRepository(pool)
 
-	push := processor.NewNoopPush()
-	email := processor.NewNoopEmail()
-	sms := processor.NewNoopSMS()
+	// Wire real processors. They automatically fall back to noop when
+	// credentials are missing, so the service is still useful in dev.
+	push := processor.NewFCMPush(cfg.Push.FCMKey)
+	email := processor.NewSendGridEmail(cfg.Email.SendGridAPIKey)
+	sms := processor.NewTwilioSMS(cfg.SMS.TwilioSID, cfg.SMS.TwilioToken, cfg.SMS.TwilioPhone)
 
 	svc := service.NewNotificationService(
 		notifRepo, prefRepo, devRepo, tmplRepo, push, email, sms, eventPub,

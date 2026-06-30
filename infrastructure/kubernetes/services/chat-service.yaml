@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: chat-service
-          image: spark/chat-service:latest
+          image: ghcr.io/elevatecompact/chat-service:latest
           ports:
             - containerPort: 4005
             - containerPort: 4006

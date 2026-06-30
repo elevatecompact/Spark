@@ -170,11 +170,19 @@ func (s *analyticsService) QueryMetrics(ctx context.Context, query domain.Metric
 }
 
 func (s *analyticsService) GetRealtimeMetrics(ctx context.Context) (map[string]interface{}, error) {
+	activeViewers, _ := s.eventRepo.UniqueUsersSince(ctx, 5)
+	giftsSent, _ := s.eventRepo.CountByEventSince(ctx, "gift.sent", 60)
+	chatMessages, _ := s.eventRepo.CountByEventSince(ctx, "chat.message", 5)
+	newSubscribers, _ := s.eventRepo.CountByEventSince(ctx, "subscription.created", 60)
+	topEvents, totalEvents, _ := s.eventRepo.TopEventNamesSince(ctx, 60, 10)
+
 	return map[string]interface{}{
-		"active_viewers":  42,
-		"gifts_sent":      156,
-		"chat_messages":   1204,
-		"new_subscribers": 8,
+		"active_viewers":  activeViewers,
+		"gifts_sent":      giftsSent,
+		"chat_messages":   chatMessages,
+		"new_subscribers": newSubscribers,
+		"total_events":    totalEvents,
+		"top_events":      topEvents,
 		"timestamp":       time.Now().UTC(),
 	}, nil
 }

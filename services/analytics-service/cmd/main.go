@@ -44,6 +44,19 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to run migrations")
 	}
 
+	// Open ClickHouse if a DSN is configured. A nil connection falls back to
+	// Postgres for realtime metrics and queries.
+	chConn, err := repository.OpenClickHouse(ctx, cfg.ClickHouse.URL)
+	if err != nil {
+		log.Warn().Err(err).Msg("clickhouse disabled; falling back to postgres")
+		chConn = nil
+	} else if chConn != nil {
+		defer chConn.Close()
+		log.Info().Msg("clickhouse connected")
+	} else {
+		log.Info().Msg("clickhouse not configured; using postgres for realtime metrics")
+	}
+
 	var eventProducer events.EventProducer
 	var eventConsumer events.EventConsumer
 	if cfg.Kafka.Enabled {
@@ -55,14 +68,13 @@ func main() {
 	}
 	defer eventProducer.Close()
 
-	eventRepo := repository.NewTrackedEventRepository(pool)
+	eventRepo := repository.NewTrackedEventRepository(pool, chConn)
 	dashRepo := repository.NewDashboardRepository(pool)
 	reportRepo := repository.NewReportRepository(pool)
 	tmplRepo := repository.NewReportTemplateRepository(pool)
 	funnelRepo := repository.NewFunnelRepository(pool)
 
 	analyticsSvc := service.NewAnalyticsService(eventRepo, dashRepo, reportRepo, tmplRepo, funnelRepo, eventProducer)
-
 	analyticsHandler := handler.NewAnalyticsHandler(analyticsSvc)
 
 	go func() {

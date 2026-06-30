@@ -10,7 +10,7 @@ import (
 type Config struct {
 	ServiceName string `mapstructure:"service_name"`
 
-	Port    int    `mapstructure:"port"`
+	Port int `mapstructure:"port"`
 
 	PostgresHost     string `mapstructure:"postgres_host"`
 	PostgresPort     int    `mapstructure:"postgres_port"`
@@ -24,8 +24,12 @@ type Config struct {
 
 	KafkaBrokers []string `mapstructure:"kafka_brokers"`
 
-	MaxBalanceCents  int64 `mapstructure:"max_balance_cents"`
-	PayoutMinCents   int64 `mapstructure:"payout_minimum_cents"`
+	MaxBalanceCents int64 `mapstructure:"max_balance_cents"`
+	PayoutMinCents  int64 `mapstructure:"payout_minimum_cents"`
+
+	StripeSecretKey    string `mapstructure:"stripe_secret_key"`
+	PayPalClientID     string `mapstructure:"paypal_client_id"`
+	PayPalClientSecret string `mapstructure:"paypal_client_secret"`
 
 	AllowedOrigins []string `mapstructure:"allowed_origins"`
 }
@@ -46,6 +50,9 @@ func Load() (*Config, error) {
 	v.SetDefault("kafka_brokers", []string{"localhost:9092"})
 	v.SetDefault("max_balance_cents", 100000000)
 	v.SetDefault("payout_minimum_cents", 5000)
+	v.SetDefault("stripe_secret_key", os.Getenv("STRIPE_SECRET_KEY"))
+	v.SetDefault("paypal_client_id", os.Getenv("PAYPAL_CLIENT_ID"))
+	v.SetDefault("paypal_client_secret", os.Getenv("PAYPAL_CLIENT_SECRET"))
 	v.SetDefault("allowed_origins", []string{"*"})
 
 	v.AutomaticEnv()
@@ -63,6 +70,9 @@ func Load() (*Config, error) {
 	v.BindEnv("kafka_brokers", "WALLET_KAFKA_BROKERS")
 	v.BindEnv("max_balance_cents", "WALLET_MAX_BALANCE_CENTS")
 	v.BindEnv("payout_minimum_cents", "WALLET_PAYOUT_MINIMUM_CENTS")
+	v.BindEnv("stripe_secret_key", "WALLET_STRIPE_SECRET_KEY")
+	v.BindEnv("paypal_client_id", "WALLET_PAYPAL_CLIENT_ID")
+	v.BindEnv("paypal_client_secret", "WALLET_PAYPAL_CLIENT_SECRET")
 	v.BindEnv("allowed_origins", "WALLET_ALLOWED_ORIGINS")
 
 	v.AddConfigPath(".")

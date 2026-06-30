@@ -1,81 +1,111 @@
+// Spark Platform Flutter SDK
+//
+// This library provides a typed client for every public REST endpoint exposed
+// by the Spark platform (identity, content, chat, recommendations,
+// notifications, wallet, payment, subscription, streaming, gift, search,
+// analytics, and admin).
+//
+// The `Spark` class is the entry point. Each domain has its own sub-client
+// (e.g. `spark.identity`, `spark.content`) so applications can opt in to just
+// the surfaces they need while still sharing a single HTTP client and
+// authentication token.
+
+import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart' as http;
 
-class Spark {
-  final String baseUrl;
-  String? _accessToken;
-  final http.Client _client;
+import 'src/analytics_client.dart';
+import 'src/auth_client.dart';
+import 'src/chat_client.dart';
+import 'src/content_client.dart';
+import 'src/creator_client.dart';
+import 'src/discovery_client.dart';
+import 'src/errors.dart';
+import 'src/gift_client.dart';
+import 'src/models.dart';
+import 'src/notification_client.dart';
+import 'src/payment_client.dart';
+import 'src/recommendation_client.dart';
+import 'src/search_client.dart';
+import 'src/stream_client.dart';
+import 'src/subscription_client.dart';
+import 'src/wallet_client.dart';
 
+export 'src/analytics_client.dart';
+export 'src/auth_client.dart';
+export 'src/chat_client.dart';
+export 'src/content_client.dart';
+export 'src/creator_client.dart';
+export 'src/discovery_client.dart';
+export 'src/errors.dart';
+export 'src/gift_client.dart';
+export 'src/models.dart';
+export 'src/notification_client.dart';
+export 'src/payment_client.dart';
+export 'src/recommendation_client.dart';
+export 'src/search_client.dart';
+export 'src/stream_client.dart';
+export 'src/subscription_client.dart';
+export 'src/wallet_client.dart';
+
+class Spark {
   Spark({
     this.baseUrl = 'https://api.spark.dev/api/v1',
     String? accessToken,
     http.Client? client,
   })  : _accessToken = accessToken,
-        _client = client ?? http.Client();
+        _client = client ?? http.Client() {
+    _transport = _HttpTransport(_client, baseUrl, () => _accessToken);
+    identity = AuthClient(_transport);
+    content = ContentClient(_transport);
+    chat = ChatClient(_transport);
+    notifications = NotificationClient(_transport);
+    recommendations = RecommendationClient(_transport);
+    wallet = WalletClient(_transport);
+    payment = PaymentClient(_transport);
+    subscription = SubscriptionClient(_transport);
+    stream = StreamClient(_transport);
+    gifts = GiftClient(_transport);
+    search = SearchClient(_transport);
+    discovery = DiscoveryClient(_transport);
+    analytics = AnalyticsClient(_transport);
+    creator = CreatorClient(_transport);
+  }
 
-  set accessToken(String token) => _accessToken = token;
+  final String baseUrl;
+  String? _accessToken;
+  final http.Client _client;
+  late final _HttpTransport _transport;
 
-  Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_accessToken != null) 'Authorization': 'Bearer $_accessToken',
-      };
+  late final AuthClient identity;
+  late final ContentClient content;
+  late final ChatClient chat;
+  late final NotificationClient notifications;
+  late final RecommendationClient recommendations;
+  late final WalletClient wallet;
+  late final PaymentClient payment;
+  late final SubscriptionClient subscription;
+  late final StreamClient stream;
+  late final GiftClient gifts;
+  late final SearchClient search;
+  late final DiscoveryClient discovery;
+  late final AnalyticsClient analytics;
+  late final CreatorClient creator;
 
-  Future<Map<String, dynamic>> _request(
+  String? get accessToken => _accessToken;
+  set accessToken(String? token) {
+    _accessToken = token;
+  }
+
+  /// Convenience wrapper for ad-hoc REST calls.
+  Future<Map<String, dynamic>> request(
     String method,
     String path, {
     Map<String, dynamic>? body,
+    Map<String, String>? query,
   }) async {
-    final uri = Uri.parse('$baseUrl$path');
-    final request = http.Request(method, uri)..headers.addAll(_headers);
-    if (body != null) {
-      request.body = jsonEncode(body);
-    }
-
-    final streamed = await _client.send(request);
-    final response = await http.Response.fromStream(streamed);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('HTTP ${response.statusCode}: ${response.body}');
-    }
-
-    return jsonDecode(response.body) as Map<String, dynamic>;
-  }
-
-  Future<AuthResponse> register({
-    required String email,
-    required String username,
-    required String password,
-  }) async {
-    final data = await _request('POST', '/auth/register', body: {
-      'email': email,
-      'username': username,
-      'password': password,
-    });
-    final result = AuthResponse.fromJson(data);
-    if (result.accessToken.isNotEmpty) {
-      _accessToken = result.accessToken;
-    }
-    return result;
-  }
-
-  Future<AuthResponse> login({
-    required String email,
-    required String password,
-  }) async {
-    final data = await _request('POST', '/auth/login', body: {
-      'email': email,
-      'password': password,
-    });
-    final result = AuthResponse.fromJson(data);
-    if (result.accessToken.isNotEmpty) {
-      _accessToken = result.accessToken;
-    }
-    return result;
-  }
-
-  Future<User> me() async {
-    final data = await _request('GET', '/users/me');
-    return User.fromJson(data);
+    return _transport.request(method, path, body: body, query: query);
   }
 
   void dispose() {
@@ -83,56 +113,75 @@ class Spark {
   }
 }
 
-class AuthResponse {
-  final User user;
-  final String accessToken;
-  final String refreshToken;
-  final int expiresIn;
+/// Internal HTTP transport used by every sub-client.
+class _HttpTransport {
+  _HttpTransport(this._client, this.baseUrl, this._tokenAccessor);
 
-  AuthResponse({
-    required this.user,
-    required this.accessToken,
-    required this.refreshToken,
-    required this.expiresIn,
-  });
+  final http.Client _client;
+  final String baseUrl;
+  final String? Function() _tokenAccessor;
 
-  factory AuthResponse.fromJson(Map<String, dynamic> json) => AuthResponse(
-        user: User.fromJson(json['user']),
-        accessToken: json['access_token'] as String,
-        refreshToken: json['refresh_token'] as String,
-        expiresIn: json['expires_in'] as int,
-      );
-}
+  Map<String, String> get _headers => {
+        'Content-Type': 'application/json',
+        if (_tokenAccessor() != null) 'Authorization': 'Bearer ${_tokenAccessor()!}',
+      };
 
-class User {
-  final String id;
-  final String email;
-  final String username;
-  final String? displayName;
-  final String? avatarUrl;
-  final bool isCreator;
-  final bool isVerified;
-  final String createdAt;
+  Future<dynamic> request(
+    String method,
+    String path, {
+    Map<String, dynamic>? body,
+    Map<String, String>? query,
+  }) async {
+    final base = Uri.parse(baseUrl);
+    final uri = base.replace(
+      path: base.path.endsWith('/') ? '${base.path}${path.replaceFirst('/', '')}' : '${base.path}$path',
+      queryParameters: query,
+    );
+    final request = http.Request(method, uri)..headers.addAll(_headers);
+    if (body != null) {
+      request.body = jsonEncode(body);
+    }
+    final streamed = await _client.send(request);
+    final response = await http.Response.fromStream(streamed);
 
-  User({
-    required this.id,
-    required this.email,
-    required this.username,
-    this.displayName,
-    this.avatarUrl,
-    required this.isCreator,
-    required this.isVerified,
-    required this.createdAt,
-  });
+    if (response.statusCode == 204 || response.body.isEmpty) {
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        return null;
+      }
+    }
 
-  factory User.fromJson(Map<String, dynamic> json) => User(
-        id: json['id'] as String,
-        email: json['email'] as String,
-        username: json['username'] as String,
-        displayName: json['display_name'] as String?,
-        avatarUrl: json['avatar_url'] as String?,
-        isCreator: json['is_creator'] as bool? ?? false,
-        isVerified: json['is_verified'] as bool? ?? false,
-        createdAt: json['created_at'] as String,
-      );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw SparkApiException(response.statusCode, response.body);
+    }
+
+    if (response.headers['content-type']?.contains('application/json') ?? false) {
+      return jsonDecode(response.body);
+    }
+    return response.body;
+  }
+
+  Future<T> json<T>(
+    String method,
+    String path,
+    T Function(dynamic json) parse, {
+    Map<String, dynamic>? body,
+    Map<String, String>? query,
+  }) async {
+    final data = await request(method, path, body: body, query: query);
+    return parse(data);
+  }
+
+  Future<List<T>> jsonList<T>(
+    String method,
+    String path,
+    T Function(dynamic json) parse, {
+    Map<String, dynamic>? body,
+    Map<String, String>? query,
+  }) async {
+    final data = await request(method, path, body: body, query: query);
+    if (data is! List) {
+      return const <T>[];
+    }
+    return data.map(parse).toList();
+  }
 }

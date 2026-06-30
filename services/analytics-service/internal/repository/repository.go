@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/ClickHouse/clickhouse-go/v2"
+	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -17,6 +19,9 @@ type TrackedEventRepository interface {
 	Insert(ctx context.Context, event *domain.TrackedEvent) error
 	InsertBatch(ctx context.Context, events []*domain.TrackedEvent) error
 	Query(ctx context.Context, metricName string, start, end time.Time) ([]*domain.MetricAggregate, error)
+	CountByEventSince(ctx context.Context, eventName string, sinceMinutes int) (int64, error)
+	UniqueUsersSince(ctx context.Context, sinceMinutes int) (int64, error)
+	TopEventNamesSince(ctx context.Context, sinceMinutes, limit int) ([]string, int64, error)
 }
 
 type DashboardRepository interface {
@@ -44,7 +49,8 @@ type FunnelRepository interface {
 }
 
 type eventRepository struct {
-	pool *pgxpool.Pool
+	pool   *pgxpool.Pool
+	chConn driver.Conn
 }
 
 type dashboardRepository struct {
@@ -63,8 +69,8 @@ type funnelRepository struct {
 	pool *pgxpool.Pool
 }
 
-func NewTrackedEventRepository(pool *pgxpool.Pool) TrackedEventRepository {
-	return &eventRepository{pool: pool}
+func NewTrackedEventRepository(pool *pgxpool.Pool, chConn driver.Conn) TrackedEventRepository {
+	return &eventRepository{pool: pool, chConn: chConn}
 }
 
 func NewDashboardRepository(pool *pgxpool.Pool) DashboardRepository {
@@ -83,12 +89,42 @@ func NewFunnelRepository(pool *pgxpool.Pool) FunnelRepository {
 	return &funnelRepository{pool: pool}
 }
 
+// OpenClickHouse opens a ClickHouse connection using the standard DSN format
+// (clickhouse://user:password@host:port/database). When the URL is empty a nil
+// connection is returned; callers should treat that as "ClickHouse disabled".
+func OpenClickHouse(ctx context.Context, dsn string) (driver.Conn, error) {
+	if dsn == "" {
+		return nil, nil
+	}
+	conn, err := clickhouse.Open(&clickhouse.Options{
+		Addr: []string{dsn},
+		Auth: clickhouse.Auth{
+			Database: "default",
+		},
+		DialTimeout: 5 * time.Second,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("open clickhouse: %w", err)
+	}
+	if err := conn.Ping(ctx); err != nil {
+		_ = conn.Close()
+		return nil, fmt.Errorf("ping clickhouse: %w", err)
+	}
+	return conn, nil
+}
+
 func (r *eventRepository) Insert(ctx context.Context, event *domain.TrackedEvent) error {
 	query := `INSERT INTO tracked_events (id, event_name, user_id, session_id, properties, context, event_time, created_at)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`
 	_, err := r.pool.Exec(ctx, query, event.ID, event.EventName, event.UserID, event.SessionID, event.Properties, event.Context, event.EventTime, event.CreatedAt)
 	if err != nil {
 		return fmt.Errorf("failed to insert event: %w", err)
+	}
+	if r.chConn != nil {
+		_ = r.chConn.AsyncInsert(ctx, fmt.Sprintf(
+			"INSERT INTO spark.tracked_events (id, event_name, user_id, session_id, properties, event_time) VALUES ('%s','%s','%s','%s','%s','%s')",
+			event.ID, escapeCH(event.EventName), event.UserID, escapeCH(event.SessionID), escapeCH(string(event.Properties)), event.EventTime.UTC().Format("2006-01-02 15:04:05.000"),
+		), false)
 	}
 	return nil
 }
@@ -109,10 +145,53 @@ func (r *eventRepository) InsertBatch(ctx context.Context, events []*domain.Trac
 			return fmt.Errorf("failed to insert batch event: %w", err)
 		}
 	}
+	if r.chConn != nil {
+		var buf []string
+		for _, e := range events {
+			buf = append(buf, fmt.Sprintf(
+				"('%s','%s','%s','%s','%s','%s')",
+				e.ID, escapeCH(e.EventName), e.UserID, escapeCH(e.SessionID), escapeCH(string(e.Properties)), e.EventTime.UTC().Format("2006-01-02 15:04:05.000"),
+			))
+		}
+		stmt := "INSERT INTO spark.tracked_events (id, event_name, user_id, session_id, properties, event_time) VALUES " + joinComma(buf)
+		_ = r.chConn.AsyncInsert(ctx, stmt, false)
+	}
 	return nil
 }
 
 func (r *eventRepository) Query(ctx context.Context, metricName string, start, end time.Time) ([]*domain.MetricAggregate, error) {
+	// Try ClickHouse first for richer aggregates; fall back to Postgres.
+	if r.chConn != nil {
+		rows, err := r.chConn.Query(ctx, `
+SELECT
+    event_name AS metric_name,
+    toStartOfMinute(event_time) AS time_bucket,
+    count() AS count,
+    sum(0) AS sum,
+    avg(0) AS avg,
+    quantile(0.5)(0) AS p50,
+    quantile(0.95)(0) AS p95,
+    quantile(0.99)(0) AS p99
+FROM spark.tracked_events
+WHERE event_name = ? AND event_time BETWEEN ? AND ?
+GROUP BY metric_name, time_bucket
+ORDER BY time_bucket ASC`, metricName, start, end)
+		if err == nil {
+			defer rows.Close()
+			var out []*domain.MetricAggregate
+			for rows.Next() {
+				a := &domain.MetricAggregate{}
+				if err := rows.ScanStruct(&a); err == nil {
+					a.Dimensions = json.RawMessage("{}")
+					out = append(out, a)
+				}
+			}
+			if out != nil {
+				return out, nil
+			}
+		}
+	}
+
 	rows, err := r.pool.Query(ctx, `SELECT metric_name, time_bucket, dimensions, count, sum, avg, p50, p95, p99
 		FROM metric_aggregates WHERE metric_name = $1 AND time_bucket >= $2 AND time_bucket <= $3 ORDER BY time_bucket ASC`, metricName, start, end)
 	if err != nil {
@@ -134,6 +213,77 @@ func (r *eventRepository) Query(ctx context.Context, metricName string, start, e
 		aggregates = []*domain.MetricAggregate{}
 	}
 	return aggregates, nil
+}
+
+// CountByEventSince returns the number of events with the given name in the
+// last `sinceMinutes` minutes. Backed by ClickHouse when available.
+func (r *eventRepository) CountByEventSince(ctx context.Context, eventName string, sinceMinutes int) (int64, error) {
+	if r.chConn != nil {
+		var count uint64
+		err := r.chConn.QueryRow(ctx, `SELECT count() FROM spark.tracked_events WHERE event_name = ? AND event_time >= now() - INTERVAL ? MINUTE`, eventName, sinceMinutes).Scan(&count)
+		if err == nil {
+			return int64(count), nil
+		}
+	}
+	return r.countByEventPG(ctx, eventName, sinceMinutes)
+}
+
+func (r *eventRepository) countByEventPG(ctx context.Context, eventName string, sinceMinutes int) (int64, error) {
+	var count int64
+	err := r.pool.QueryRow(ctx, `SELECT count(*) FROM tracked_events WHERE event_name = $1 AND event_time >= NOW() - ($2::int * INTERVAL '1 minute')`, eventName, sinceMinutes).Scan(&count)
+	return count, err
+}
+
+// UniqueUsersSince returns the number of distinct users active in the window.
+func (r *eventRepository) UniqueUsersSince(ctx context.Context, sinceMinutes int) (int64, error) {
+	if r.chConn != nil {
+		var count uint64
+		err := r.chConn.QueryRow(ctx, `SELECT uniqExact(user_id) FROM spark.tracked_events WHERE event_time >= now() - INTERVAL ? MINUTE`, sinceMinutes).Scan(&count)
+		if err == nil {
+			return int64(count), nil
+		}
+	}
+	var count int64
+	err := r.pool.QueryRow(ctx, `SELECT count(DISTINCT user_id) FROM tracked_events WHERE event_time >= NOW() - ($1::int * INTERVAL '1 minute')`, sinceMinutes).Scan(&count)
+	return count, err
+}
+
+// TopEventNamesSince returns the most frequent event names in the window
+// along with the total number of events.
+func (r *eventRepository) TopEventNamesSince(ctx context.Context, sinceMinutes, limit int) ([]string, int64, error) {
+	if r.chConn != nil {
+		rows, err := r.chConn.Query(ctx, `SELECT event_name, count() AS c FROM spark.tracked_events WHERE event_time >= now() - INTERVAL ? MINUTE GROUP BY event_name ORDER BY c DESC LIMIT ?`, sinceMinutes, limit)
+		if err == nil {
+			defer rows.Close()
+			var names []string
+			for rows.Next() {
+				var name string
+				var c uint64
+				if err := rows.Scan(&name, &c); err == nil {
+					names = append(names, name)
+				}
+			}
+			var total uint64
+			_ = r.chConn.QueryRow(ctx, `SELECT count() FROM spark.tracked_events WHERE event_time >= now() - INTERVAL ? MINUTE`, sinceMinutes).Scan(&total)
+			return names, int64(total), nil
+		}
+	}
+	rows, err := r.pool.Query(ctx, `SELECT event_name, count(*) AS c FROM tracked_events WHERE event_time >= NOW() - ($1::int * INTERVAL '1 minute') GROUP BY event_name ORDER BY c DESC LIMIT $2`, sinceMinutes, limit)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+	var names []string
+	for rows.Next() {
+		var name string
+		var c int64
+		if err := rows.Scan(&name, &c); err == nil {
+			names = append(names, name)
+		}
+	}
+	var total int64
+	_ = r.pool.QueryRow(ctx, `SELECT count(*) FROM tracked_events WHERE event_time >= NOW() - ($1::int * INTERVAL '1 minute')`, sinceMinutes).Scan(&total)
+	return names, total, nil
 }
 
 func (r *dashboardRepository) GetByUserAndType(ctx context.Context, userID uuid.UUID, dashType domain.DashboardType) (*domain.Dashboard, error) {
@@ -323,4 +473,36 @@ func (r *funnelRepository) UpdateResults(ctx context.Context, id uuid.UUID, resu
 		return domain.ErrFunnelNotFound
 	}
 	return nil
+}
+
+func escapeCH(s string) string {
+	out := make([]byte, 0, len(s))
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		if c == '\'' || c == '\\' {
+			out = append(out, '\\', c)
+			continue
+		}
+		if c == '\n' {
+			out = append(out, '\\', 'n')
+			continue
+		}
+		if c == '\r' {
+			out = append(out, '\\', 'r')
+			continue
+		}
+		out = append(out, c)
+	}
+	return string(out)
+}
+
+func joinComma(items []string) string {
+	if len(items) == 0 {
+		return ""
+	}
+	out := items[0]
+	for i := 1; i < len(items); i++ {
+		out += "," + items[i]
+	}
+	return out
 }

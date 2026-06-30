@@ -38,6 +38,7 @@ func main() {
 
 	embRepo := repository.NewEmbeddingRepository(pool)
 	intRepo := repository.NewInteractionRepository(pool)
+	contentRepo := repository.NewContentRepository(pool)
 
 	var eventPub events.EventProducer
 	if len(cfg.KafkaBrokers) > 0 {
@@ -46,7 +47,7 @@ func main() {
 		eventPub = events.NewNoopProducer()
 	}
 
-	svc := service.NewRecService(embRepo, intRepo, eventPub)
+	svc := service.NewRecServiceWithContent(embRepo, intRepo, contentRepo, eventPub)
 	h := handler.New(svc)
 
 	r := chi.NewRouter()

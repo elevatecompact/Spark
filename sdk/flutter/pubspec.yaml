@@ -1,15 +1,13 @@
 name: spark_sdk
-description: Spark platform Flutter SDK
-version: 0.1.0
+description: Comprehensive Dart/Flutter SDK for the Spark platform (identity, content, chat, recommendations, notifications, wallet, payment, subscription, streaming, gift, search, analytics, creator, and admin endpoints).
+version: 0.2.0
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   http: ^1.1.0
-  json_annotation: ^4.8.0
 
 dev_dependencies:
-  build_runner: ^2.4.0
-  json_serializable: ^6.7.0
   test: ^1.24.0
+  lints: ^3.0.0
